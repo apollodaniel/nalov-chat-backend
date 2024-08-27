@@ -1,0 +1,23 @@
+### Register
+
+POST http://localhost:8751/auth/register
+Accept: application/json
+Content-Type: application/json
+
+{
+	"username": "apollodaniel",
+	"name": "apollo Daniel",
+	"password": "GatoBola123$$"
+}
+
+
+### Login
+
+POST http://localhost:8751/auth/login
+Accept: application/json
+Content-Type: application/json
+
+{
+	"username": "apollodaniel",
+	"password": "GatoBola123$$"
+}

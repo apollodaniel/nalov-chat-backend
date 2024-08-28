@@ -8,7 +8,7 @@ export async function register_middleware(req: Request, resp: Response, next: Ne
 	try{
 		await register_user(new User({...req.body}));
 
-		next();
+		return resp.sendStatus(204);
 	}catch(err: any){
 		if(err.message == error_map.username_already_exists.error_msg)
 			return resp.status(400).send({errors: [error_map.username_already_exists.error_obj]});

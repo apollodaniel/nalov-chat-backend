@@ -1,26 +1,28 @@
 import jwt from 'jsonwebtoken';
 import { IDbType } from './types';
 
-export interface IAuth{
-	token?: string,
-	user_id: string
-}
+export type AuthArgs = {token: string, user_id?: string} | {user_id: string, token?: string};
 
 export class Auth implements IDbType{
 	token: string;
 	user_id: string;
 
-	constructor(obj: IAuth){
-		if(obj.token)
-			this.token = obj.token;
-		else{
-			this.token = jwt.sign(obj.user_id, process.env.JWT_REFRESH_TOKEN!);
+	constructor(args: AuthArgs){
+		const {token, user_id} = args;
+		if(token){
+			this.token = token;
+			const id = jwt.verify(token, process.env.JWT_REFRESH_TOKEN!, {});
+				if(typeof id !== "string")
+				throw new Error("invalid token");
+			this.user_id = id;
+		}else{
+			this.token = jwt.sign(user_id!, process.env.JWT_REFRESH_TOKEN!, {});
+			this.user_id = user_id!;
 		}
-		this.user_id = obj.user_id;
 	}
 
 	generate_auth_token(): string {
-		return jwt.sign({refresh_token: this.token}, process.env.JWT_AUTH_TOKEN!, {expiresIn: '15M'});
+		return jwt.sign({refresh_token: this.token }, process.env.JWT_AUTH_TOKEN!, {expiresIn: '15M'});
 	}
 
 	toInsert(): string{

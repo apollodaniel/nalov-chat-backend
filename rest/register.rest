@@ -21,3 +21,10 @@ Content-Type: application/json
 	"username": "apollodaniel",
 	"password": "GatoBola123$$"
 }
+
+
+### Token
+
+GET http://localhost:8751/auth/token
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.YmViMjJkMzMtNWM1Yy00MTU1LWI4ZWQtNGM5NDkwY2IyODkx.X-9_AIjkxic3WRn-SJcT2pdVv99KkYfoj5duteQF9q0

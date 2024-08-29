@@ -1,6 +1,9 @@
 # app-chat-backend
 
 
+### Todo
+ - Handle expired auth token errors
+
 ### Estructure
 
 #### Tabela usuarios

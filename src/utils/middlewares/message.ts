@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { Auth } from "../../types/auth";
-import { create_message, delete_message, get_chats, get_messages, patch_message } from "../functions";
+import { create_message, delete_message, get_chats, patch_message } from "../functions/messages";
+import { get_messages } from "../get_messages";
 import { Message } from "../../types/message";
 
 

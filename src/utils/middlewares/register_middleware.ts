@@ -2,7 +2,7 @@ import { NextFunction, Request, Response } from "express";
 import { User } from "../../types/user";
 import { ChatAppDatabase } from "../db";
 import { error_map } from "../constants";
-import { register_user } from "../functions";
+import { register_user } from "../functions/users";
 
 
 

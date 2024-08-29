@@ -1,5 +1,6 @@
 import {describe, expect, test} from "@jest/globals";
-import {check_user_credential_valid, create_message, get_messages, login_user, register_user} from "../../src/utils/functions";
+import {check_user_credential_valid, create_message, login_user, register_user} from "../../src/utils/functions";
+import { get_messages } from "../../src/utils/get_messages";
 import { User } from "../../src/types/user";
 import { Auth } from "../../src/types/auth";
 import { Message } from "../../src/types/message";

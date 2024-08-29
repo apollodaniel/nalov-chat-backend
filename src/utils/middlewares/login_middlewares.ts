@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { UserCredentials } from "../../types/types";
-import { check_user_credential_valid, login_user } from "../functions";
+import { check_user_credential_valid, login_user } from "../functions/users";
 import { Auth } from "../../types/auth";
 import { ChatAppDatabase } from "../db";
 import { error_map } from "../constants";

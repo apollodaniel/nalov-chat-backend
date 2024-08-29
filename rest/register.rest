@@ -19,7 +19,7 @@ Content-Type: application/json
 
 {
 	"username": "apollodaniel",
-	"password": "GatoBola123$$"
+	"password": "apolloTwich123$"
 }
 
 
@@ -29,6 +29,12 @@ GET http://localhost:8751/auth/token
 Accept: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.YmViMjJkMzMtNWM1Yy00MTU1LWI4ZWQtNGM5NDkwY2IyODkx.X-9_AIjkxic3WRn-SJcT2pdVv99KkYfoj5duteQF9q0
 
+
+### Chats
+
+GET http://localhost:8751/api/chats
+Accept: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyZWZyZXNoX3Rva2VuIjoiZXlKaGJHY2lPaUpJVXpJMU5pSjkuTUdGa01qSmxaREV0Wm1FNFl5MDBNVFJrTFdFeE9HUXRNR1UyWmpZMllqWm1ZVEpqLlU5bk4zSVh1OUZpSzdJYm1QdWNheExsZ2FpTUYwVm5ZYnVsNFJTVTg4eWciLCJpYXQiOjE3MjQ5MzYxNzcsImV4cCI6MTcyNDkzNzA3N30.GCxov2p6KD2NPVcgfMpdKsZ7mDzBsalUKvomQ3ULHUM
 
 
 ### Messages

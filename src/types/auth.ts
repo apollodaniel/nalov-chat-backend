@@ -3,6 +3,10 @@ import { IDbType } from './types';
 
 export type AuthArgs = {token: string, user_id?: string} | {user_id: string, token?: string};
 
+type SignedAuthToken = {
+	refresh_token: string
+}
+
 export class Auth implements IDbType{
 	token: string;
 	user_id: string;
@@ -23,6 +27,11 @@ export class Auth implements IDbType{
 
 	generate_auth_token(): string {
 		return jwt.sign({refresh_token: this.token }, process.env.JWT_AUTH_TOKEN!, {expiresIn: '15M'});
+	}
+
+	static verify_auth_token(auth_token: string): string {
+		const verified_token = jwt.verify(auth_token, process.env.JWT_AUTH_TOKEN!, {}) as SignedAuthToken;
+		return verified_token.refresh_token;
 	}
 
 	toInsert(): string{

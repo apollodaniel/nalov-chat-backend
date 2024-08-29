@@ -2,6 +2,8 @@ import { NextFunction, Request, Response } from "express";
 import { User } from "../../types/user";
 import { ChatAppDatabase } from "../db";
 import { error_map } from "../constants";
+import { register_user } from "../functions";
+
 
 
 export async function register_middleware(req: Request, resp: Response, next: NextFunction){
@@ -15,9 +17,4 @@ export async function register_middleware(req: Request, resp: Response, next: Ne
 		console.log(err.message);
 		return resp.sendStatus(500);
 	}
-}
-
-async function register_user(user: User){
-	const db = ChatAppDatabase.getInstance();
-	await db.exec_db(user.toInsert());
 }

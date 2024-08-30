@@ -3,6 +3,8 @@
 
 ### Todo
  - Handle expired auth token errors
+ - Adicionar cripografia no envio e recebimento de informações
+
 
 ### Estructure
 

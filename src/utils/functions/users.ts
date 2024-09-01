@@ -3,7 +3,7 @@ import { UserCredentials } from "../../types/types";
 import { IUser, User } from "../../types/user";
 import { error_map } from "../constants";
 import { ChatAppDatabase } from "../db";
-
+import jwt from "jsonwebtoken";
 
 export async function register_user(user: User) {
 	const db = ChatAppDatabase.getInstance();
@@ -47,4 +47,21 @@ export async function check_user_credential_valid(
 	}
 
 	throw new Error("invalid user credentials");
+}
+
+export async function check_user_token_valid(token: string, type: "refresh"|"auth"): Promise<boolean>{
+	try{
+
+		const result = jwt.verify(token, type == "refresh" ? process.env.JWT_REFRESH_TOKEN! : process.env.JWT_AUTH_TOKEN!);
+		const db = await ChatAppDatabase.getInstance().initDB();
+		if(type === "auth"){
+			const query = await db.query(`SELECT * FROM auth WHERE token = '${result}'`);
+			return query.rowCount != 0;
+		}else{
+			const query = await db.query(`SELECT * FROM users WHERE id = '${result}'`);
+			return query.rowCount != 0;
+		}
+	}catch(err: any){
+		return false;
+	}
 }

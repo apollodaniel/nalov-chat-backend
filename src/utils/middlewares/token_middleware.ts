@@ -1,5 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 import { Auth } from "../../types/auth";
+import { check_user_token_valid } from "../functions/users";
 
 
 export function token_middleware(req: Request, resp: Response, next: NextFunction){
@@ -20,4 +21,21 @@ export function token_middleware(req: Request, resp: Response, next: NextFunctio
 			return resp.sendStatus(401);
 		return resp.sendStatus(500);
 	}
+}
+
+
+export async function check_token_middleware(req: Request, resp: Response, next: NextFunction){
+	const auth = (req.headers.authorization || "").split(" ");
+
+	if(auth.length < 2)
+		return resp.sendStatus(401);
+
+	const token = auth[1];
+	const type = auth[0];
+
+	if(type !== "Refresh" && type !== "Auth")
+		return resp.sendStatus(401);
+
+	let valid = await check_user_token_valid(token, type === "Refresh" ? "refresh" : "auth");
+	return resp.send({valid: valid});
 }

@@ -25,17 +25,6 @@ export function token_middleware(req: Request, resp: Response, next: NextFunctio
 
 
 export async function check_token_middleware(req: Request, resp: Response, next: NextFunction){
-	const auth = (req.headers.authorization || "").split(" ");
-
-	if(auth.length < 2)
-		return resp.sendStatus(401);
-
-	const token = auth[1];
-	const type = auth[0];
-
-	if(type !== "Refresh" && type !== "Auth")
-		return resp.sendStatus(401);
-
-	let valid = await check_user_token_valid(token, type === "Refresh" ? "refresh" : "auth");
+	let valid = await check_user_token_valid(req.body.token, req.body.type);
 	return resp.send({valid: valid});
 }

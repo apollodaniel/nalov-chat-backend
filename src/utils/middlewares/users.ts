@@ -33,6 +33,8 @@ export async function users_get_single_middleware(req: Request, resp: Response, 
 		});
 	}catch(err: any){
 		console.log(err.message);
+		if(err.message == "not found")
+			return resp.sendStatus(404);
 		return resp.sendStatus(500);
 	}
 }

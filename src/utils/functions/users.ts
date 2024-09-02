@@ -29,7 +29,7 @@ export async function get_single_user(id: string): Promise<IUser>{
 	const db = ChatAppDatabase.getInstance();
 	const users = (await db.query_db(`SELECT * FROM users WHERE id = '${id}'`)).rows as IUser[];
 	if(users.length === 0)
-		throw Error("user doesn't exists");
+		throw Error("not found");
 
 	return users[0];
 }

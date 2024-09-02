@@ -7,7 +7,11 @@ import { JsonWebTokenError } from "jsonwebtoken";
 
 export async function users_get_middleware(req: Request, resp: Response, next: NextFunction){
 	try{
-		const users = (await get_users()).map((u: IUser) => {
+
+		const current_user_id = (new Auth({token: Auth.verify_auth_token(req.auth!)})).user_id;
+		const users = (await get_users()).filter((u: IUser )=>
+			current_user_id != u.id!
+		).map((u: IUser) => {
 			return {...u, password: undefined}
 		});
 		return resp.status(200).send({

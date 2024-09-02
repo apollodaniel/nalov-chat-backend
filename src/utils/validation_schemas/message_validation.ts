@@ -40,7 +40,6 @@ export const MESSAGE_GET_VALIDATION: Schema = {
 export const MESSAGE_PUT_VALIDATION: Schema = {
 	id: {
 		in: ["body"],
-		optional: true,
 		customSanitizer: {
 			options: () => gen_v4(),
 		},
@@ -72,7 +71,6 @@ export const MESSAGE_PUT_VALIDATION: Schema = {
 	},
 	date: {
 		in: ["body"],
-		optional: true,
 		customSanitizer: {
 			options: () => Date.now(),
 		},
@@ -108,7 +106,6 @@ export const MESSAGE_PATCH_VALIDATION: Schema = {
 	},
 	date: {
 		in: ["body"],
-		optional: true,
 		customSanitizer: {
 			options: () => Date.now(),
 		},

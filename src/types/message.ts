@@ -1,5 +1,15 @@
 import { v4 as gen_v4 } from "uuid";
 import { IDbType, MessageUpdateParams } from "./types";
+import { IUser } from "./user";
+
+export interface IChat {
+	user: {
+		id: string,
+		name: string,
+		username: string
+	},
+	last_message: IMessage,
+}
 
 export interface IMessage {
 	id?: string,

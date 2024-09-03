@@ -9,6 +9,7 @@ import {
 import { get_messages } from "../get_messages";
 import { IChat, Message } from "../../types/message";
 import { matchedData } from "express-validator";
+import { EVENT_EMITTER } from "../constants";
 
 export async function message_get_middleware(
 	req: Request,
@@ -30,6 +31,40 @@ export async function message_get_middleware(
 		console.log(err.message);
 		return resp.sendStatus(500);
 	}
+}
+
+
+export async function message_listen_middleware(
+	req: Request,
+	resp: Response,
+	next: NextFunction,
+) {
+
+	resp.setHeader("Content-Type", "text/event-stream");
+	resp.setHeader("Connection", "Keep-Alive");
+	resp.setHeader("Cache-Control", "no-cache");
+	resp.flushHeaders();
+
+
+	const auth = req.auth!;
+	const sender_id = new Auth({ token: Auth.verify_auth_token(auth) }).user_id;
+	const receiver_id: string =
+		(typeof req.query.receiver_id === "string" && req.query.receiver_id) ||
+		"";
+
+	EVENT_EMITTER.on("update-messages", async ()=>{
+		try {
+			const messages = await get_messages(sender_id, receiver_id);
+			return resp.write(`data: ${JSON.stringify({ user_id: sender_id, messages: messages })}\n\n`);
+		} catch (err: any) {
+			console.log(err.message);
+			return resp.write("error: error while trying to receive messages\n");
+		}
+	});
+
+	req.on("close", ()=>{
+		resp.end();
+	});
 }
 
 export async function message_get_single_middleware(
@@ -64,6 +99,7 @@ export async function message_put_middleware(
 			sender_id: user_id.user_id,
 		});
 		await create_message(message);
+		EVENT_EMITTER.emit("update-messages");
 		return resp.sendStatus(204);
 	} catch (err: any) {
 		console.log(err.message);
@@ -83,6 +119,7 @@ export async function message_patch_middleware(
 
 	try {
 		await patch_message({ id: message_id, ...req.body });
+		EVENT_EMITTER.emit("update-messages");
 		return resp.sendStatus(200);
 	} catch (err: any) {
 		console.log(err.message);

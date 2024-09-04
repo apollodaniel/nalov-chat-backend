@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { validationResult } from "express-validator";
 import { Auth } from "../../types/auth";
+import { JsonWebTokenError } from "jsonwebtoken";
 
 export function validation_middleware(req: Request, resp: Response, next: NextFunction){
 	const result = validationResult(req);
@@ -29,7 +30,7 @@ export function auth_validation_middleware(req: Request, resp: Response, next: N
 
 	}catch(err: any){
 		console.log(err.message);
-		if(err.message === "jwt_malformed")
+		if(err instanceof JsonWebTokenError)
 			return resp.sendStatus(401);
 		return resp.sendStatus(500);
 	}

@@ -20,6 +20,11 @@ export async function login_user(auth: Auth) {
 	}
 }
 
+export async function logout_user(refresh_token: string){
+	const db = ChatAppDatabase.getInstance();
+	await db.exec_db(`DELETE FROM auth WHERE token = '${refresh_token}'`);
+}
+
 export async function get_users(): Promise<IUser[]>{
 	const db = ChatAppDatabase.getInstance();
 	return (await db.query_db("SELECT * FROM users")).rows as IUser[];

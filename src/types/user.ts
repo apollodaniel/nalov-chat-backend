@@ -6,6 +6,7 @@ export interface IUser{
 	username: string;
 	name: string;
 	password: string;
+	profile_picture?: string
 }
 
 export class User implements IDbType{
@@ -13,15 +14,23 @@ export class User implements IDbType{
 	username: string;
 	name: string;
 	password: string;
+	profile_picture: string;
 
 	constructor(obj: IUser){
 		if(obj.id)
 			this.id = obj.id;
 		else
 			this.id = gen_v4();
+		if(obj.profile_picture)
+			this.profile_picture = obj.profile_picture;
+		else
+			this.profile_picture = '/public/profile-pictures/default.png';
+
 		this.username = obj.username;
 		this.name = obj.name;
 		this.password = obj.password;
+
+
 	}
 
 	toInsert(): string{

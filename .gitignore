@@ -1,2 +1,5 @@
 node_modules/
+files/
+public/
+!public/profile-picture/default.png
 .env

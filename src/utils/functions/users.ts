@@ -25,18 +25,18 @@ export async function logout_user(refresh_token: string){
 	await db.exec_db(`DELETE FROM auth WHERE token = '${refresh_token}'`);
 }
 
-export async function get_users(): Promise<IUser[]>{
+export async function get_users(): Promise<User[]>{
 	const db = ChatAppDatabase.getInstance();
-	return (await db.query_db("SELECT * FROM users")).rows as IUser[];
+	return ((await db.query_db("SELECT * FROM users")).rows as IUser[]).map((e)=>new User(e)) as User[];
 }
 
-export async function get_single_user(id: string): Promise<IUser>{
+export async function get_single_user(id: string): Promise<User>{
 	const db = ChatAppDatabase.getInstance();
 	const users = (await db.query_db(`SELECT * FROM users WHERE id = '${id}'`)).rows as IUser[];
 	if(users.length === 0)
 		throw Error("not found");
 
-	return users[0];
+	return new User(users[0]);
 }
 
 export async function check_user_credential_valid(

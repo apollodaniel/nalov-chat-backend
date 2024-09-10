@@ -2,6 +2,7 @@ import pg, { QueryResult } from "pg";
 import { IMessage } from "../types/message";
 import { IUser } from "../types/user";
 import {
+    CREATE_ATTACHMENTS_TABLE,
 	CREATE_AUTH_TABLE,
 	CREATE_MESSAGE_TABLE,
 	CREATE_USER_TABLE,
@@ -26,7 +27,7 @@ export class ChatAppDatabase {
 	async initDB(): Promise<pg.Client> {
 		if (!this.db) {
 			this.db = new pg.Client({
-				host: "db",
+				host: "localhost",
 				port:
 					(process.env.POSTGRES_PORT &&
 						parseInt(process.env.POSTGRES_PORT)) ||
@@ -39,6 +40,7 @@ export class ChatAppDatabase {
 		}
 
 		await this.db.query(CREATE_USER_TABLE);
+		await this.db.query(CREATE_ATTACHMENTS_TABLE);
 		await this.db.query(CREATE_MESSAGE_TABLE);
 		await this.db.query(CREATE_AUTH_TABLE);
 

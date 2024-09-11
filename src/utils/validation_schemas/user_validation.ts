@@ -1,4 +1,5 @@
 import { Schema } from "express-validator";
+import { USERNAME_VALIDATION_REGEX } from "../constants";
 
 export const USER_GET_SINGLE_VALIDATION_SCHEMA: Schema = {
 	id: {
@@ -7,6 +8,25 @@ export const USER_GET_SINGLE_VALIDATION_SCHEMA: Schema = {
 		},
 		isString: {
 			errorMessage: "id must be a valid string"
+		}
+	}
+};
+
+export const USER_PATCH_SINGLE_VALIDATION_SCHEMA: Schema = {
+	name: {
+		in: ["query", "body"],
+		optional: true,
+		notEmpty: {
+			errorMessage: "name must not be empty",
+		},
+		isString: {
+			errorMessage: "name must be a valid string",
+		},
+		isLength: {
+			options: {
+				min: 4,
+				max: 100,
+			},
 		}
 	}
 };

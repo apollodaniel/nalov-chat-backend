@@ -1,8 +1,9 @@
 import { NextFunction, Request, Response } from "express";
 import { get_single_user, get_users } from "../functions/users";
-import { IUser } from "../../types/user";
+import { IUser, User } from "../../types/user";
 import { Auth } from "../../types/auth";
 import { JsonWebTokenError } from "jsonwebtoken";
+import { ChatAppDatabase } from "../db";
 
 
 export async function users_get_middleware(req: Request, resp: Response, next: NextFunction){
@@ -47,6 +48,28 @@ export async function get_current_user_middleware(req: Request, resp: Response, 
 		const user = await get_single_user(auth_obj.user_id);
 		return resp.send({...user, password: undefined});
 	}catch(err: any){
+		if(err instanceof JsonWebTokenError){
+			return resp.sendStatus(401);
+		}
+
+		return resp.sendStatus(500);
+	}
+}
+
+export async function users_patch_single_middleware(req: Request, resp: Response, next: NextFunction){
+	const auth = req.auth;
+
+	try{
+		const auth_obj = new Auth({token: Auth.verify_auth_token(auth)});
+
+		if(req.query.name){
+			const db = ChatAppDatabase.getInstance();
+			await db.exec_db(User.toPatch(auth_obj.user_id, {name: req.query.name as string}));
+		}
+
+		return resp.sendStatus(200);
+	}catch(err: any){
+		console.log(err.message);
 		if(err instanceof JsonWebTokenError){
 			return resp.sendStatus(401);
 		}

@@ -9,7 +9,7 @@ export interface IUser{
 	profile_picture?: string
 }
 
-export class User implements IDbType{
+export class User{
 	id: string;
 	username: string;
 	name: string;
@@ -37,7 +37,20 @@ export class User implements IDbType{
 		return `INSERT INTO users(id, username, name, password) values ('${this.id}', '${this.username}', '${this.name}', '${this.password}')`;
 	}
 
-	toDelete(): string {
-		return '';
+	static toDelete(id: string): string {
+		return `DELETE FROM users WHERE id = '${id}'`;
+	}
+	static toPatch(id: string, obj:{name?: string, profile_picture?: string}): string {
+		let update_text = [];
+
+		if(!obj.name && !obj.profile_picture)
+			return '';
+
+		if(obj.name)
+			update_text.push(`name = '${obj.name}'`);
+		if(obj.profile_picture)
+			update_text.push(`profile_picture = '${obj.profile_picture}'`);
+
+		return `UPDATE users SET ${update_text.join(", ")} WHERE id = '${id}'`;
 	}
 }

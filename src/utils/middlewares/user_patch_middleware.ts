@@ -84,7 +84,11 @@ export function user_patch_middleware(
 						Buffer.from(matched_boundary),
 					);
 					let name_field = buffer.slice(0, boundary_end);
-					buffer = buffer.slice(boundary_end, buffer.length);
+
+					// check if one boundary only
+
+					// + 2 for skipping '--' and last escape codes
+					buffer = buffer.slice(boundary_end + matched_boundary.length+4, buffer.length);
 
 					let new_name = name_field.slice(name_field.indexOf(
 						"\r\n\r\n",
@@ -98,13 +102,9 @@ export function user_patch_middleware(
 
 				// no more content
 				if (
-					buffer
-						.toString("binary")
-						.trim()
-						.replace("\n", "")
-						.replace("\r", "").length === 0
+					buffer.length === 0
 				)
-					next();
+					return next();
 
 				fs.writeFileSync(join(file_path, filename), "", "binary");
 				if (!filename)
@@ -158,7 +158,11 @@ export function user_patch_middleware(
 						Buffer.from(matched_boundary),
 					);
 					let name_field = buffer.slice(0, boundary_end);
-					buffer = buffer.slice(boundary_end - matched_boundary.length, buffer.length);
+
+					// check if one boundary only
+
+					// + 2 for skipping '--' and last escape codes
+					buffer = buffer.slice(boundary_end + matched_boundary.length+4, buffer.length);
 
 					let new_name = name_field.slice(name_field.indexOf(
 						"\r\n\r\n",

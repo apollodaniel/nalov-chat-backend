@@ -62,12 +62,14 @@ export async function users_patch_single_middleware(req: Request, resp: Response
 	try{
 		const auth_obj = new Auth({token: Auth.verify_auth_token(auth)});
 
+		console.log(req.body);
+
 		if(req.query.name){
 			const db = ChatAppDatabase.getInstance();
-			await db.exec_db(User.toPatch(auth_obj.user_id, {name: req.query.name as string}));
+			await db.exec_db(User.toPatch(auth_obj.user_id, {name: req.body.name as string}));
 		}
 
-		return resp.sendStatus(200);
+		next();
 	}catch(err: any){
 		console.log(err.message);
 		if(err instanceof JsonWebTokenError){

@@ -1,6 +1,9 @@
 # app-chat-backend
 
 
+# sendo truncado na linha 45
+
+
 ### Todo
  - Handle expired auth token errors
  - Adicionar cripografia no envio e recebimento de informações

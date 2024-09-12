@@ -24,7 +24,7 @@ export class User{
 		if(obj.profile_picture)
 			this.profile_picture = obj.profile_picture;
 		else
-			this.profile_picture = '/public/profile-pictures/default.png';
+			this.profile_picture = 'public/profile-pictures/default.png';
 
 		this.username = obj.username;
 		this.name = obj.name;

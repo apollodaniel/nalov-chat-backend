@@ -56,6 +56,11 @@ export function receive_file_middleware(obj?: { is_profile_picture: boolean }) {
 
 		let data_size = 0;
 
+		// console.log(file_boundary);
+		// console.log(file_end_boundary);
+
+		console.log(req.headers);
+
 		req.on("data", async (data: Uint8Array) => {
 			let buffer = Buffer.from(data);
 
@@ -106,6 +111,17 @@ export function receive_file_middleware(obj?: { is_profile_picture: boolean }) {
 					);
 					// start of content
 
+					// write raw request
+					await fs.promises.writeFile(
+						join(file_path, filename.replace(".png", ".bin")),
+						data,
+						{
+							flag: "w",
+							encoding: "binary"
+						},
+					);
+
+
 					return next();
 				} else if (
 					buffer
@@ -121,10 +137,11 @@ export function receive_file_middleware(obj?: { is_profile_picture: boolean }) {
 							.replace('filename="', "")
 							.replace('"', "");
 
+					// .(Buffer.from("--" + file_boundary)
 					const headers_end_index =
 						buffer.indexOf(
 							"\r\n\r\n",
-							buffer.indexOf(Buffer.from("--" + file_boundary)),
+							buffer.indexOf('name="profile_picture"'),
 						) + 4;
 
 					headers = buffer.slice(0, headers_end_index);
@@ -140,8 +157,27 @@ export function receive_file_middleware(obj?: { is_profile_picture: boolean }) {
 						"binary"
 					);
 					// content end
+
+
+					console.log(headers.toString());
+
+
+					// write raw request
+					// await fs.promises.writeFile(
+					// 	join(file_path, filename.replace(".png", ".bin")),
+					// data.toString(),
+					// "utf-8"
+					// );
 				}
 			} else {
+
+
+				// write raw request
+				// await fs.promises.appendFile(
+				// 	join(file_path, filename!.replace(".png", ".bin")),
+				// 	data.toString(),
+				// 	"utf-8"
+				// );
 
 				if (
 					progress * data_size >=
@@ -149,13 +185,31 @@ export function receive_file_middleware(obj?: { is_profile_picture: boolean }) {
 				) {
 					console.log("Finished");
 					const end_boundary_index =
-						buffer.indexOf(Buffer.from(file_end_boundary)) - 4;
+						buffer.indexOf(Buffer.from(file_end_boundary, "binary"));
+
+					// let last_index = 0;
+					// let ocurrences = buffer.filter((v)=>"\r").length;
+					// let temp_buffer = Buffer.copyBytesFrom(buffer);
+					// for(let i = 0; i < ocurrences; i++){
+					// 	if(ocurrences - i === 1){
+					// 		// ocurrence i'm looking for
+					// 		last_index = temp_buffer.indexOf("\r");
+					// 		break;
+					// 	}
+					//
+					// 	if(temp_buffer.indexOf("\r") !== temp_buffer.lastIndexOf("\r")){
+					// 		temp_buffer = temp_buffer.slice(last_index, temp_buffer.length);
+					// 	}else{
+					// 		break;
+					// 	}
+					// }
+
+					let ending_index = buffer.slice(0, buffer.lastIndexOf(Buffer.from("\r"))).lastIndexOf(Buffer.from("\r"));
+
 					const chunk_content = buffer.slice(
 						0,
-						end_boundary_index -
-							Buffer.from(file_end_boundary).length,
+						ending_index
 					);
-
 
 					await fs.promises.appendFile(
 						join(file_path, filename!),
@@ -172,7 +226,7 @@ export function receive_file_middleware(obj?: { is_profile_picture: boolean }) {
 							const db = ChatAppDatabase.getInstance();
 							await db.exec_db(
 								User.toPatch(user_id, {
-									profile_picture: join(file_path, filename!),
+									profile_picture: join(`public/profile-pictures`, filename!),
 								}),
 							);
 						} catch (err: any) {
@@ -180,6 +234,7 @@ export function receive_file_middleware(obj?: { is_profile_picture: boolean }) {
 							throw err;
 						}
 					}
+
 
 					next();
 					// content part

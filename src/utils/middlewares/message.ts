@@ -52,7 +52,7 @@ export async function message_listen_middleware(
 		(typeof req.query.receiver_id === "string" && req.query.receiver_id) ||
 		"";
 
-	EVENT_EMITTER.on("update-messages", async ()=>{
+	const listener = async ()=>{
 		try {
 			const messages = await get_messages(sender_id, receiver_id);
 			return resp.write(`data: ${JSON.stringify({ user_id: sender_id, messages: messages })}\n\n`);
@@ -60,11 +60,16 @@ export async function message_listen_middleware(
 			console.log(err.message);
 			return resp.write("error: error while trying to receive messages\n");
 		}
-	});
+	};
+
 
 	req.on("close", ()=>{
-		resp.end();
+		console.log("Closing connection!");
+		EVENT_EMITTER.removeListener('update-messages', listener);
+		return resp.end();
 	});
+
+	EVENT_EMITTER.on("update-messages", listener);
 }
 
 export async function message_get_single_middleware(

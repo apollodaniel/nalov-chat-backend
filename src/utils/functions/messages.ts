@@ -2,6 +2,7 @@ import { QueryResult } from "pg";
 import { IChat, IMessage, Message } from "../../types/message";
 import { ChatAppDatabase } from "../db";
 import { MessageUpdateParams } from "../../types/types";
+import { IUser, User } from "../../types/user";
 
 export async function get_messages(
 	sender_id: string,
@@ -21,11 +22,12 @@ export async function get_chats(user_id: string): Promise<IChat[]> {
 	const chats: {user_id: string, id: string}[] = [...(await db.query(`SELECT DISTINCT ON (LEAST(receiver_id, sender_id), GREATEST(receiver_id, sender_id)) CASE WHEN sender_id = '${user_id}' THEN receiver_id ELSE sender_id END AS user_id, id FROM messages WHERE '${user_id}' IN (receiver_id, sender_id) ORDER BY LEAST(receiver_id, sender_id), GREATEST(receiver_id, sender_id), date DESC`)).rows];
 	let chats_parsed: IChat[] = [];
 	for(let chat of chats){
-		const user = (await db.query(`SELECT id, name, username FROM users WHERE id = '${chat.user_id}'`));
+		const user = (await db.query(`SELECT * FROM users WHERE id = '${chat.user_id}'`));
 		const message = (await db.query(`SELECT * FROM messages WHERE id = '${chat.id}'`));
+		const chat_user = new User(user.rows[0]);
 		if((user.rowCount||0) != 0 && (message.rowCount||0) != 0 ){
 			chats_parsed.push({
-				user: user.rows[0],
+				user: {...chat_user},
 				last_message: message.rows[0]
 			})
 		}

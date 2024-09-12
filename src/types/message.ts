@@ -6,7 +6,8 @@ export interface IChat {
 	user: {
 		id: string,
 		name: string,
-		username: string
+		username: string,
+		profile_picture: string
 	},
 	last_message: IMessage,
 }

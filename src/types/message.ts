@@ -1,6 +1,5 @@
 import { v4 as gen_v4 } from "uuid";
-import { IDbType, MessageUpdateParams } from "./types";
-import { IUser } from "./user";
+import { MessageUpdateParams } from "./types";
 
 export interface IChat {
 	user: {
@@ -15,7 +14,8 @@ export interface IChat {
 export interface IMessage {
 	id?: string,
 	content: string,
-	date: number,
+	creation_date: number,
+	last_modified_date: number,
 	sender_id: string,
 	receiver_id: string
 }
@@ -23,7 +23,8 @@ export interface IMessage {
 export class Message{
 	id: string;
 	content: string;
-	date: number;
+	creation_date: number;
+	last_modified_date: number;
 	sender_id: string;
 	receiver_id: string;
 
@@ -32,24 +33,25 @@ export class Message{
 			this.id = obj.id;
 		else
 			this.id = gen_v4();
-		this.date = obj.date;
+		this.creation_date= obj.creation_date;
+		this.last_modified_date= obj.last_modified_date;
 		this.content = obj.content;
 		this.sender_id = obj.sender_id;
 		this.receiver_id = obj.receiver_id;
 	}
 
 	toInsert(): string{
-		return `INSERT INTO messages(id, content, date, sender_id, receiver_id) values ('${this.id}', '${this.content}', ${this.date}, '${this.sender_id}', '${this.receiver_id}')`;
+		return `INSERT INTO messages(id, content, creation_date, last_modified_date, sender_id, receiver_id) values ('${this.id}', '${this.content}', ${this.creation_date}, ${this.last_modified_date}, '${this.sender_id}', '${this.receiver_id}')`;
 	}
 
 	static toDelete(id: string): string{
 		return `DELETE FROM messages WHERE id = '${id}'`;
 	}
 
-	static toUpdate({id,date,content}: MessageUpdateParams): string{
+	static toUpdate({id,last_modified_date,content}: MessageUpdateParams): string{
 		let set_params = [];
-		if(date)
-			set_params.push(`date = ${date}`)
+		if(last_modified_date)
+			set_params.push(`last_modified_date = ${last_modified_date}`)
 		if(content)
 			set_params.push(`content = '${content}'`)
 

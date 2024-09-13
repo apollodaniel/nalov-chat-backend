@@ -2,7 +2,7 @@ import EventEmitter from "events";
 
 
 export const CREATE_USER_TABLE = `CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY NOT NULL, username TEXT NOT NULL UNIQUE, name TEXT NOT NULL, password TEXT NOT NULL, profile_picture TEXT)`;
-export const CREATE_MESSAGE_TABLE = `CREATE TABLE IF NOT EXISTS messages(id TEXT PRIMARY KEY NOT NULL, content TEXT NOT NULL, date BIGINT NOT NULL, sender_id TEXT NOT NULL REFERENCES users(id), receiver_id TEXT NOT NULL REFERENCES users(id), attachment TEXT REFERENCES attachments(id))`;
+export const CREATE_MESSAGE_TABLE = `CREATE TABLE IF NOT EXISTS messages(id TEXT PRIMARY KEY NOT NULL, content TEXT NOT NULL, creation_date BIGINT NOT NULL, last_modified_date BIGINT NOT NULL, sender_id TEXT NOT NULL REFERENCES users(id), receiver_id TEXT NOT NULL REFERENCES users(id), attachment TEXT REFERENCES attachments(id))`;
 export const CREATE_AUTH_TABLE = `CREATE TABLE IF NOT EXISTS auth(token TEXT PRIMARY KEY NOT NULL, user_id TEXT NOT NULL REFERENCES users(id))`;
 export const CREATE_ATTACHMENTS_TABLE = `CREATE TABLE IF NOT EXISTS attachments (id text NOT NULL, path text NOT NULL, filename text NOT NULL, date bigint NOT NULL)`;
 

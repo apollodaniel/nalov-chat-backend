@@ -69,7 +69,19 @@ export const MESSAGE_PUT_VALIDATION: Schema = {
 			errorMessage: "content must be between 1-300 char long",
 		},
 	},
-	date: {
+	// date: {
+	// 	in: ["body"],
+	// 	customSanitizer: {
+	// 		options: () => Date.now(),
+	// 	},
+	// }
+	creation_date: {
+		in: ["body"],
+		customSanitizer: {
+			options: () => Date.now(),
+		},
+	},
+	last_modified_date: {
 		in: ["body"],
 		customSanitizer: {
 			options: () => Date.now(),
@@ -104,7 +116,7 @@ export const MESSAGE_PATCH_VALIDATION: Schema = {
 			errorMessage: "content must be between 1-300 char long",
 		},
 	},
-	date: {
+	last_modified_date: {
 		in: ["body"],
 		customSanitizer: {
 			options: () => Date.now(),

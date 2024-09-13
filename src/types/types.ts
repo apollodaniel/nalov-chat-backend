@@ -5,7 +5,7 @@ export interface IDbType {
 
 export type MessageUpdateParams = {
 	id: string,
-	date?: number,
+	last_modified_date: number,
 	content?: string,
 };
 

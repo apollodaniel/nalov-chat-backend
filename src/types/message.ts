@@ -47,8 +47,12 @@ export class Message{
 	}
 
 	static toUpdate({id,date,content}: MessageUpdateParams): string{
-		if(!date && !content)
-			return "";
-		return `UPDATE FROM messages SET ${(date && `date = ${date}`)} ${(content && `content = '${content}'`)}  WHERE id = '${id}'`;
+		let set_params = [];
+		if(date)
+			set_params.push(`date = ${date}`)
+		if(content)
+			set_params.push(`content = '${content}'`)
+
+		return `UPDATE messages SET ${set_params.join(", ")} WHERE id = '${id}'`;
 	}
 }

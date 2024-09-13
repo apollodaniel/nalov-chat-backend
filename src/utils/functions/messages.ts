@@ -39,15 +39,15 @@ export async function get_chats(user_id: string): Promise<IChat[]> {
 export async function get_single_message(
 	user_id: string,
 	message_id: string,
-): Promise<Message[]> {
+): Promise<Message> {
 	const db = ChatAppDatabase.getInstance();
 	const messages: IMessage[] = (
 		(await db.query_db(
-			`SELECT * FROM messages WHERE id = '${message_id}' AND (sender_id = '${user_id} OR receiver_id = '${user_id}')`,
+			`SELECT * FROM messages WHERE id = '${message_id}' AND (sender_id = '${user_id}' OR receiver_id = '${user_id}')`,
 		)) as QueryResult<IMessage>
 	).rows;
 
-	return messages.map((m) => new Message(m));
+	return new Message({...messages[0]});
 }
 
 export async function create_message(message: Message) {
@@ -57,6 +57,7 @@ export async function create_message(message: Message) {
 
 export async function patch_message(params: MessageUpdateParams) {
 	const db = ChatAppDatabase.getInstance();
+	console.log(Message.toUpdate(params));
 	await db.exec_db(Message.toUpdate(params));
 }
 

@@ -4,6 +4,7 @@ import {
 	create_message,
 	delete_message,
 	get_chats,
+	get_single_message,
 	patch_message,
 } from "../functions/messages";
 import { get_messages } from "../get_messages";
@@ -119,8 +120,7 @@ export async function message_patch_middleware(
 ) {
 	const auth = req.auth!;
 	const user_id = new Auth({ token: Auth.verify_auth_token(auth) });
-	const message_id: string = req.query.id as string;
-
+	const message_id: string = req.params.id as string;
 
 	try {
 		await patch_message({ id: message_id, ...req.body });
@@ -139,10 +139,19 @@ export async function message_delete_middleware(
 ) {
 	const auth = req.auth!;
 	const user_id = new Auth({ token: Auth.verify_auth_token(auth) });
-	const message_id: string = req.query.id as string;
+	const message_id: string = req.params.id;
+
+	if(!message_id)
+		return resp.sendStatus(403);
+
+	const message = await get_single_message(user_id.user_id, message_id);
+
+	if(message.sender_id !== user_id.user_id)
+		return resp.sendStatus(401);
 
 	try {
 		await delete_message(message_id);
+		EVENT_EMITTER.emit("update-messages");
 		return resp.sendStatus(200);
 	} catch (err: any) {
 		console.log(err.message);

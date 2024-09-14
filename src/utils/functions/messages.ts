@@ -9,11 +9,17 @@ export async function get_messages(
 	receiver_id: string,
 ): Promise<Message[]> {
 	const db = ChatAppDatabase.getInstance();
+
 	const messages: IMessage[] = (
 		(await db.query_db(
 			`SELECT * FROM messages WHERE (sender_id = '${sender_id}' AND receiver_id = '${receiver_id}') OR (sender_id = '${receiver_id}' AND receiver_id = '${sender_id}') ORDER BY creation_date`,
 		)) as QueryResult<IMessage>
 	).rows;
+
+	console.log(`UPDATE messages SET seen_date = ${Date.now()} WHERE seen_date IS NULL AND sender_id = '${receiver_id}' AND receiver_id = '${sender_id}'`)
+
+	await db.exec_db(`UPDATE messages SET seen_date = ${Date.now()} WHERE seen_date IS NULL AND sender_id = '${receiver_id}' AND receiver_id = '${sender_id}'`);
+
 	return messages.map((m) => new Message(m));
 }
 
@@ -22,13 +28,21 @@ export async function get_chats(user_id: string): Promise<IChat[]> {
 	const chats: {user_id: string, id: string}[] = [...(await db.query(`SELECT DISTINCT ON (LEAST(receiver_id, sender_id), GREATEST(receiver_id, sender_id)) CASE WHEN sender_id = '${user_id}' THEN receiver_id ELSE sender_id END AS user_id, id FROM messages WHERE '${user_id}' IN (receiver_id, sender_id) ORDER BY LEAST(receiver_id, sender_id), GREATEST(receiver_id, sender_id), creation_date DESC`)).rows];
 	let chats_parsed: IChat[] = [];
 	for(let chat of chats){
+		// user chat id
 		const user = (await db.query(`SELECT * FROM users WHERE id = '${chat.user_id}'`));
+
+		// get last message
 		const message = (await db.query(`SELECT * FROM messages WHERE id = '${chat.id}'`));
+
+		// get unseen message count for receiver user being the user that made the request and sender_id the chat user id
+		const unseen_count = await db.query(`SELECT count(*) FROM messages WHERE seen_date IS NULL AND sender_id = '${chat.user_id}' AND receiver_id = '${user_id}'`);
+
 		const chat_user = new User(user.rows[0]);
 		if((user.rowCount||0) != 0 && (message.rowCount||0) != 0 ){
 			chats_parsed.push({
 				user: {...chat_user},
-				last_message: message.rows[0]
+				last_message: message.rows[0],
+				unseen_message_count: unseen_count.rowCount === 0 && 0 || unseen_count.rows[0]["count"]
 			})
 		}
 	}

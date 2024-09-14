@@ -9,6 +9,7 @@ export interface IChat {
 		profile_picture: string
 	},
 	last_message: IMessage,
+	unseen_message_count: number,
 }
 
 export interface IMessage {
@@ -16,6 +17,7 @@ export interface IMessage {
 	content: string,
 	creation_date: number,
 	last_modified_date: number,
+	seen_date: number | null,
 	sender_id: string,
 	receiver_id: string
 }
@@ -27,6 +29,7 @@ export class Message{
 	last_modified_date: number;
 	sender_id: string;
 	receiver_id: string;
+	seen_date: number | null;
 
 	constructor(obj: IMessage){
 		if(obj.id)
@@ -38,6 +41,7 @@ export class Message{
 		this.content = obj.content;
 		this.sender_id = obj.sender_id;
 		this.receiver_id = obj.receiver_id;
+		this.seen_date = obj.seen_date;
 	}
 
 	toInsert(): string{

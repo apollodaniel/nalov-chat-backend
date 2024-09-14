@@ -4,10 +4,10 @@ import {
 	create_message,
 	delete_message,
 	get_chats,
+	get_messages,
 	get_single_message,
 	patch_message,
 } from "../functions/messages";
-import { get_messages } from "../get_messages";
 import { IChat, Message } from "../../types/message";
 import { matchedData } from "express-validator";
 import { EVENT_EMITTER } from "../constants";
@@ -67,7 +67,7 @@ export async function message_put_middleware(
 			sender_id: user_id.user_id,
 		});
 		await create_message(message);
-		EVENT_EMITTER.emit(`update-${user_id.user_id}`, [message.receiver_id]);
+		EVENT_EMITTER.emit(`update-${message.receiver_id}`, [user_id.user_id]);
 		return resp.sendStatus(204);
 	} catch (err: any) {
 		console.log(err.message);
@@ -88,7 +88,7 @@ export async function message_patch_middleware(
 
 	try {
 		await patch_message({ id: message_id, ...req.body });
-		EVENT_EMITTER.emit(`update-${user_id.user_id}`, [message.receiver_id]);
+		EVENT_EMITTER.emit(`update-${message.receiver_id}`, [user_id.user_id]);
 		return resp.sendStatus(200);
 	} catch (err: any) {
 		console.log(err.message);
@@ -115,7 +115,7 @@ export async function message_delete_middleware(
 
 	try {
 		await delete_message(message_id);
-		EVENT_EMITTER.emit(`update-${user_id.user_id}-${message.receiver_id}`);
+		EVENT_EMITTER.emit(`update-${message.receiver_id}`, [user_id.user_id]);
 		return resp.sendStatus(200);
 	} catch (err: any) {
 		console.log(err.message);
@@ -159,9 +159,7 @@ export async function message_listen_middleware(
 		"";
 
 	const listener = async (opts: any)=>{
-		console.log(opts[0]);
-		console.log(receiver_id);
-		if(opts[0] !== receiver_id)
+		if(opts[0] !== sender_id)
 			return;
 		try {
 			const messages = await get_messages(sender_id, receiver_id);
@@ -175,11 +173,11 @@ export async function message_listen_middleware(
 
 	req.on("close", ()=>{
 		console.log("Closing connection!");
-		EVENT_EMITTER.removeListener(`update-${sender_id}`, listener);
+		EVENT_EMITTER.removeListener(`update-${receiver_id}`, listener);
 		return resp.end();
 	});
 
-	EVENT_EMITTER.on(`update-${sender_id}`, listener);
+	EVENT_EMITTER.on(`update-${receiver_id}`, listener);
 }
 
 export async function chat_listen_middleware(
@@ -195,12 +193,13 @@ export async function chat_listen_middleware(
 
 
 	const auth = req.auth!;
-	const sender_id = new Auth({ token: Auth.verify_auth_token(auth) }).user_id;
+	const user_id = new Auth({ token: Auth.verify_auth_token(auth) }).user_id;
 
-	const listener = async ()=>{
+	const listener = async (props: any)=>{
 		try {
-			const messages = await get_chats(sender_id);
-			return resp.write(`data: ${JSON.stringify({ user_id: sender_id, messages: messages })}\n\n`);
+			const chats = await get_chats(user_id);
+			console.log("Received event " + `update-${user_id}`);
+			return resp.write(`data: ${JSON.stringify(chats)}\n\n`);
 		} catch (err: any) {
 			console.log(err.message);
 			return resp.write("error: error while trying to receive messages\n");
@@ -210,10 +209,10 @@ export async function chat_listen_middleware(
 
 	req.on("close", ()=>{
 		console.log("Closing connection!");
-		EVENT_EMITTER.removeListener(`update-${sender_id}`, listener);
+		EVENT_EMITTER.removeListener(`update-${user_id}`, listener);
 		console.log("Removed listener");
 		return resp.end();
 	});
 
-	EVENT_EMITTER.on(`update-${sender_id}`, listener);
+	EVENT_EMITTER.on(`update-${user_id}`, listener);
 }

@@ -35,44 +35,6 @@ export async function message_get_middleware(
 }
 
 
-export async function message_listen_middleware(
-	req: Request,
-	resp: Response,
-	next: NextFunction,
-) {
-
-	resp.setHeader("Content-Type", "text/event-stream");
-	resp.setHeader("Connection", "Keep-Alive");
-	resp.setHeader("Cache-Control", "no-cache");
-	resp.flushHeaders();
-
-
-	const auth = req.auth!;
-	const sender_id = new Auth({ token: Auth.verify_auth_token(auth) }).user_id;
-	const receiver_id: string =
-		(typeof req.query.receiver_id === "string" && req.query.receiver_id) ||
-		"";
-
-	const listener = async ()=>{
-		try {
-			const messages = await get_messages(sender_id, receiver_id);
-			return resp.write(`data: ${JSON.stringify({ user_id: sender_id, messages: messages })}\n\n`);
-		} catch (err: any) {
-			console.log(err.message);
-			return resp.write("error: error while trying to receive messages\n");
-		}
-	};
-
-
-	req.on("close", ()=>{
-		console.log("Closing connection!");
-		EVENT_EMITTER.removeListener('update-messages', listener);
-		return resp.end();
-	});
-
-	EVENT_EMITTER.on("update-messages", listener);
-}
-
 export async function message_get_single_middleware(
 	req: Request,
 	resp: Response,
@@ -105,7 +67,7 @@ export async function message_put_middleware(
 			sender_id: user_id.user_id,
 		});
 		await create_message(message);
-		EVENT_EMITTER.emit("update-messages");
+		EVENT_EMITTER.emit(`update-${user_id.user_id}`, [message.receiver_id]);
 		return resp.sendStatus(204);
 	} catch (err: any) {
 		console.log(err.message);
@@ -122,9 +84,11 @@ export async function message_patch_middleware(
 	const user_id = new Auth({ token: Auth.verify_auth_token(auth) });
 	const message_id: string = req.params.id as string;
 
+	const message = await get_single_message(user_id.user_id, message_id);
+
 	try {
 		await patch_message({ id: message_id, ...req.body });
-		EVENT_EMITTER.emit("update-messages");
+		EVENT_EMITTER.emit(`update-${user_id.user_id}`, [message.receiver_id]);
 		return resp.sendStatus(200);
 	} catch (err: any) {
 		console.log(err.message);
@@ -151,7 +115,7 @@ export async function message_delete_middleware(
 
 	try {
 		await delete_message(message_id);
-		EVENT_EMITTER.emit("update-messages");
+		EVENT_EMITTER.emit(`update-${user_id.user_id}-${message.receiver_id}`);
 		return resp.sendStatus(200);
 	} catch (err: any) {
 		console.log(err.message);
@@ -173,4 +137,83 @@ export async function chats_get_middleware(
 		console.log(err.message);
 		return resp.sendStatus(500);
 	}
+}
+
+// listen middlewares => data stream
+export async function message_listen_middleware(
+	req: Request,
+	resp: Response,
+	next: NextFunction,
+) {
+
+	resp.setHeader("Content-Type", "text/event-stream");
+	resp.setHeader("Connection", "Keep-Alive");
+	resp.setHeader("Cache-Control", "no-cache");
+	resp.flushHeaders();
+
+
+	const auth = req.auth!;
+	const sender_id = new Auth({ token: Auth.verify_auth_token(auth) }).user_id;
+	const receiver_id: string =
+		(typeof req.query.receiver_id === "string" && req.query.receiver_id) ||
+		"";
+
+	const listener = async (opts: any)=>{
+		console.log(opts[0]);
+		console.log(receiver_id);
+		if(opts[0] !== receiver_id)
+			return;
+		try {
+			const messages = await get_messages(sender_id, receiver_id);
+			return resp.write(`data: ${JSON.stringify({ user_id: sender_id, messages: messages })}\n\n`);
+		} catch (err: any) {
+			console.log(err.message);
+			return resp.write("error: error while trying to receive messages\n");
+		}
+	};
+
+
+	req.on("close", ()=>{
+		console.log("Closing connection!");
+		EVENT_EMITTER.removeListener(`update-${sender_id}`, listener);
+		return resp.end();
+	});
+
+	EVENT_EMITTER.on(`update-${sender_id}`, listener);
+}
+
+export async function chat_listen_middleware(
+	req: Request,
+	resp: Response,
+	next: NextFunction,
+) {
+
+	resp.setHeader("Content-Type", "text/event-stream");
+	resp.setHeader("Connection", "Keep-Alive");
+	resp.setHeader("Cache-Control", "no-cache");
+	resp.flushHeaders();
+
+
+	const auth = req.auth!;
+	const sender_id = new Auth({ token: Auth.verify_auth_token(auth) }).user_id;
+
+	const listener = async ()=>{
+		try {
+			const messages = await get_chats(sender_id);
+			return resp.write(`data: ${JSON.stringify({ user_id: sender_id, messages: messages })}\n\n`);
+		} catch (err: any) {
+			console.log(err.message);
+			return resp.write("error: error while trying to receive messages\n");
+		}
+	};
+
+
+	req.on("close", ()=>{
+		console.log("Closing connection!");
+		EVENT_EMITTER.removeListener(`update-${sender_id}`, listener);
+		console.log("Removed listener");
+		return resp.end();
+	});
+
+	EVENT_EMITTER.on(`update-${sender_id}`, listener);
 }

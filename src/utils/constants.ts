@@ -1,4 +1,4 @@
-import EventEmitter from "events";
+import {EventEmitter2} from "eventemitter2";
 
 
 export const CREATE_USER_TABLE = `CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY NOT NULL, username TEXT NOT NULL UNIQUE, name TEXT NOT NULL, password TEXT NOT NULL, profile_picture TEXT)`;
@@ -8,7 +8,10 @@ export const CREATE_ATTACHMENTS_TABLE = `CREATE TABLE IF NOT EXISTS attachments 
 
 export const USERNAME_VALIDATION_REGEX = `^(?=[a-zA-Z0-9._]{4,20}$)(?!.*[_.]{2})[^_.].*[^_.]$`;
 
-export const EVENT_EMITTER = new EventEmitter();
+export const EVENT_EMITTER = new EventEmitter2({
+	wildcard: false,
+	verboseMemoryLeak: true
+});
 
 export const error_map = {
   username_already_exists: {

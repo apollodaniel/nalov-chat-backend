@@ -2,7 +2,7 @@ import { Router } from "express";
 import { checkSchema } from "express-validator";
 import { MESSAGE_DELETE_SINGLE_VALIDATION, MESSAGE_GET_SINGLE_VALIDATION, MESSAGE_GET_VALIDATION, MESSAGE_PATCH_VALIDATION, MESSAGE_PUT_VALIDATION } from "../utils/validation_schemas/message_validation";
 import { auth_validation_middleware } from "../utils/middlewares/validation_middleware";
-import { chats_get_middleware, message_delete_middleware, message_get_middleware, message_get_single_middleware, message_listen_middleware, message_patch_middleware, message_put_middleware } from "../utils/middlewares/message";
+import { chat_listen_middleware, chats_get_middleware, message_delete_middleware, message_get_middleware, message_get_single_middleware, message_listen_middleware, message_patch_middleware, message_put_middleware } from "../utils/middlewares/message";
 
 const router = Router();
 
@@ -56,5 +56,10 @@ router.get(
 )
 
 
+router.get(
+	"/api/chats/listen",
+	auth_validation_middleware,
+	chat_listen_middleware
+);
 
 export default router;

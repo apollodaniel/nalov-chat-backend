@@ -10,20 +10,20 @@ export const MESSAGE_GET_SINGLE_VALIDATION: Schema = {
 		isString: {
 			errorMessage: "id must be a valid string",
 		},
-	}
+	},
 };
 
 export const MESSAGE_DELETE_SINGLE_VALIDATION: Schema = {
 	id: {
 		in: ["params"],
 		notEmpty: {
-			errorMessage: "id must not be empty"
+			errorMessage: "id must not be empty",
 		},
 		isString: {
-			errorMessage: "id must be a string"
-		}
-	}
-}
+			errorMessage: "id must be a string",
+		},
+	},
+};
 
 export const MESSAGE_GET_VALIDATION: Schema = {
 	receiver_id: {
@@ -87,6 +87,9 @@ export const MESSAGE_PUT_VALIDATION: Schema = {
 			options: () => Date.now(),
 		},
 	},
+	attachment: {
+		optional: true,
+	}
 };
 
 export const MESSAGE_PATCH_VALIDATION: Schema = {
@@ -97,7 +100,7 @@ export const MESSAGE_PATCH_VALIDATION: Schema = {
 		},
 		isString: {
 			errorMessage: "id must be a string",
-		}
+		},
 	},
 	content: {
 		in: ["body"],

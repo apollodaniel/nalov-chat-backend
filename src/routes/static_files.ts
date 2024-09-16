@@ -14,7 +14,7 @@ router.use("/public/profile-pictures", express.static('public/profile-picture'))
 router.post(
 	"/api/upload",
 	auth_validation_middleware,
-	receive_file_middleware(),
+	receive_file_middleware,
 	(req: Request,resp: Response)=>{
 		return resp.sendStatus(204);
 	}

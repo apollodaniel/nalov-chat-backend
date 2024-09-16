@@ -1,5 +1,5 @@
 import { QueryResult } from "pg";
-import { IChat, IMessage, Message } from "../../types/message";
+import { Attachment, IAttachment, IChat, IMessage, Message } from "../../types/message";
 import { ChatAppDatabase } from "../db";
 import { MessageUpdateParams } from "../../types/types";
 import { IUser, User } from "../../types/user";
@@ -64,9 +64,28 @@ export async function get_single_message(
 	return new Message({...messages[0]});
 }
 
+export async function get_attachment(attachment_id: string): Promise<IAttachment>{
+	const db = await ChatAppDatabase.getInstance().initDB();
+
+	const query: QueryResult<IAttachment> = (await db.query(`SELECT * FROM attachments WHERE id = '${attachment_id}'`));
+	if(query.rowCount === 0)
+		throw Error("unknown attachment "+ `SELECT * FROM attachments WHERE id = '${attachment_id}'`);
+
+	return query.rows[0];
+}
+
 export async function create_message(message: Message) {
 	const db = ChatAppDatabase.getInstance();
-	await db.exec_db(message.toInsert());
+
+	if(message.attachment){
+		await db.exec_db(message.attachment.toInsert());
+
+		await db.exec_db(new Message({...message, attachment: undefined, attachment_id: message.attachment.id}).toInsert());
+	}else {
+
+		await db.exec_db(message.toInsert());
+	}
+
 }
 
 export async function patch_message(params: MessageUpdateParams) {

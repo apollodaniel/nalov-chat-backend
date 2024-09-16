@@ -8,9 +8,11 @@ import {
 	get_single_message,
 	patch_message,
 } from "../functions/messages";
-import { IChat, Message } from "../../types/message";
+import { Attachment, IAttachment, IChat, Message } from "../../types/message";
 import { matchedData } from "express-validator";
 import { EVENT_EMITTER } from "../constants";
+import EventEmitter2 from "eventemitter2";
+import { v4 } from "uuid";
 
 export async function message_get_middleware(
 	req: Request,
@@ -53,6 +55,14 @@ export async function message_get_single_middleware(
 	}
 }
 
+
+function receive_file_listener(message: Message, user_id: string){
+	// if sucess clear delete message timeout
+	// clearTimeout(timeout_id);
+	EVENT_EMITTER.removeAllListeners(`*${message.id}*`);
+	EVENT_EMITTER.emit(`update-${message.receiver_id}`, user_id);
+}
+
 export async function message_put_middleware(
 	req: Request,
 	resp: Response,
@@ -61,14 +71,42 @@ export async function message_put_middleware(
 	const auth = req.auth!;
 	const user_id = new Auth({ token: Auth.verify_auth_token(auth) });
 	const result = matchedData(req);
+
 	try {
 		const message = new Message({
 			...req.body,
 			sender_id: user_id.user_id,
 		});
+
+
+
+		let attachment: IAttachment | undefined;
+
+		if(req.body.attachment){
+			// wait for message file for 10 seconds and if not receives delete message
+
+			const id = v4();
+			const file_extension = req.body.attachment.filename.match(/\.[^.]+$/);
+			attachment = {
+				...req.body.attachment,
+				id: id,
+				date: Date.now(),
+				path: `files/${user_id.user_id}/${id}${file_extension && file_extension[0] || ""}`
+			};
+			message.attachment = new Attachment(attachment!);
+		}
+
 		await create_message(message);
 		EVENT_EMITTER.emit(`update-${message.receiver_id}`, [user_id.user_id]);
-		return resp.sendStatus(204);
+
+		if(attachment){
+
+			EVENT_EMITTER.on(`received-file-${req.body.attachment.id}`, ()=> receive_file_listener(message, user_id.user_id));
+
+			return resp.send({message_id: message.id, attachment_id: attachment!.id});
+		}
+
+		return resp.send({message_id: message.id});
 	} catch (err: any) {
 		console.log(err.message);
 		return resp.sendStatus(500);
@@ -116,6 +154,7 @@ export async function message_delete_middleware(
 	try {
 		await delete_message(message_id);
 		EVENT_EMITTER.emit(`update-${message.receiver_id}`, [user_id.user_id]);
+		EVENT_EMITTER.removeAllListeners(`*${message_id}*`);
 		return resp.sendStatus(200);
 	} catch (err: any) {
 		console.log(err.message);

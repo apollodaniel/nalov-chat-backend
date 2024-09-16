@@ -3,26 +3,28 @@ import { MessageUpdateParams } from "./types";
 
 export interface IChat {
 	user: {
-		id: string,
-		name: string,
-		username: string,
-		profile_picture: string
-	},
-	last_message: IMessage,
-	unseen_message_count: number,
+		id: string;
+		name: string;
+		username: string;
+		profile_picture: string;
+	};
+	last_message: IMessage;
+	unseen_message_count: number;
 }
 
 export interface IMessage {
-	id?: string,
-	content: string,
-	creation_date: number,
-	last_modified_date: number,
-	seen_date: number | null,
-	sender_id: string,
-	receiver_id: string
+	id?: string;
+	content: string;
+	creation_date: number;
+	last_modified_date: number;
+	seen_date: number | null;
+	sender_id: string;
+	receiver_id: string;
+	attachment_id?: string;
+	attachment?: Attachment;
 }
 
-export class Message{
+export class Message {
 	id: string;
 	content: string;
 	creation_date: number;
@@ -30,35 +32,78 @@ export class Message{
 	sender_id: string;
 	receiver_id: string;
 	seen_date: number | null;
+	attachment_id?: string;
 
-	constructor(obj: IMessage){
-		if(obj.id)
-			this.id = obj.id;
-		else
-			this.id = gen_v4();
-		this.creation_date= obj.creation_date;
-		this.last_modified_date= obj.last_modified_date;
+	// internal acess only
+	attachment?: Attachment;
+
+	constructor(obj: IMessage) {
+		if (obj.id) this.id = obj.id;
+		else this.id = gen_v4();
+		this.creation_date = obj.creation_date;
+		this.last_modified_date = obj.last_modified_date;
 		this.content = obj.content;
 		this.sender_id = obj.sender_id;
 		this.receiver_id = obj.receiver_id;
 		this.seen_date = obj.seen_date;
+		this.attachment_id = obj.attachment_id;
 	}
 
-	toInsert(): string{
+	toInsert(): string {
+		if(this.attachment_id)
+			return `INSERT INTO messages(id, content, creation_date, last_modified_date, sender_id, receiver_id, attachment_id) values ('${this.id}', '${this.content}', ${this.creation_date}, ${this.last_modified_date}, '${this.sender_id}', '${this.receiver_id}', '${this.attachment_id}')`;
 		return `INSERT INTO messages(id, content, creation_date, last_modified_date, sender_id, receiver_id) values ('${this.id}', '${this.content}', ${this.creation_date}, ${this.last_modified_date}, '${this.sender_id}', '${this.receiver_id}')`;
 	}
 
-	static toDelete(id: string): string{
+	static toDelete(id: string): string {
 		return `DELETE FROM messages WHERE id = '${id}'`;
 	}
 
-	static toUpdate({id,last_modified_date,content}: MessageUpdateParams): string{
+	static toUpdate({
+		id,
+		last_modified_date,
+		content,
+	}: MessageUpdateParams): string {
 		let set_params = [];
-		if(last_modified_date)
-			set_params.push(`last_modified_date = ${last_modified_date}`)
-		if(content)
-			set_params.push(`content = '${content}'`)
+		if (last_modified_date)
+			set_params.push(`last_modified_date = ${last_modified_date}`);
+		if (content) set_params.push(`content = '${content}'`);
 
 		return `UPDATE messages SET ${set_params.join(", ")} WHERE id = '${id}'`;
+	}
+}
+
+export interface IAttachment {
+	id: string;
+	filename: string;
+	mimetype: string;
+	path: string;
+	byte_length: number;
+	date: number;
+}
+
+export class Attachment {
+	id: string;
+	filename: string;
+	mimetype: string;
+	path: string;
+	byte_length: number;
+	date: number;
+
+	constructor(obj: IAttachment) {
+		this.id = obj.id;
+		this.filename = obj.filename;
+		this.mimetype = obj.mimetype;
+		this.path = obj.path;
+		this.byte_length = obj.byte_length;
+		this.date = obj.date;
+	}
+
+	toInsert(): string {
+		return `INSERT INTO attachments(id, filename, mime_type, path, byte_length, date) values ('${this.id}', '${this.filename}', '${this.mimetype}', '${this.path}', ${this.byte_length}, ${this.date})`;
+	}
+
+	static toDelete(id: string): string {
+		return `DELETE FROM attachments WHERE id = '${id}'`;
 	}
 }

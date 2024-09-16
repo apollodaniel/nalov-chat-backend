@@ -4,254 +4,166 @@ import { NextFunction, Request, Response } from "express";
 import { Auth } from "../../types/auth";
 import { User } from "../../types/user";
 import { ChatAppDatabase } from "../db";
-import { AxiosError } from "axios";
+import { get_attachment } from "../functions/messages";
+import { EVENT_EMITTER } from "../constants";
 
-export function receive_file_middleware(obj?: { is_profile_picture: boolean }) {
-	return async function (req: Request, resp: Response, next: NextFunction) {
-		const { is_profile_picture } = obj || { is_profile_picture: false };
+export async  function receive_file_middleware(
+	req: Request,
+	resp: Response,
+	next: NextFunction,
+) {
+	if (
+		!req.headers["content-type"] ||
+		!req.headers["content-type"]?.startsWith("multipart/form-data")
+	)
+		return resp.sendStatus(400);
 
-		if (
-			!req.headers["content-type"] ||
-			(!req.headers["content-type"]?.startsWith("multipart/form-data") &&
-				!is_profile_picture)
-		)
-			return resp.sendStatus(400);
-		else if (
-			!req.headers["content-type"] ||
-			(!req.headers["content-type"]?.startsWith("multipart/form-data") &&
-				!is_profile_picture)
-		)
-			next();
+	const attachment_id: string|undefined = req.query.attachment_id?.toString();
 
-		const user_id = new Auth({ token: Auth.verify_auth_token(req.auth) });
+	// check attachment
+	if(!attachment_id)
+		return resp.sendStatus(401);
 
-		let file_path = join("files/", `${user_id.user_id}/`);
 
-		if (!fs.existsSync(file_path)) fs.mkdirSync(file_path);
+	const auth = req.auth!;
+	const auth_obj = new Auth({ token: Auth.verify_auth_token(auth) });
+	const user_id = auth_obj.user_id;
 
-		const file_boundary = req.headers["content-type"]
-			.split(";")[1]
-			.replace("boundary=", "")
-			.trim();
+	let file_path = `./files/${user_id}/`;
 
-		let filename: string | undefined;
+	if (!fs.existsSync(file_path)) fs.mkdirSync(file_path);
 
-		const auth = req.auth;
-		if (is_profile_picture) {
-			const auth_obj = new Auth({ token: Auth.verify_auth_token(auth) });
-			const user_id = auth_obj.user_id;
-			file_path = "public/profile-picture/";
-			filename = `${user_id}.png`;
-		}
+	const file_boundary = req.headers["content-type"]
+		.split(";")[1]
+		.replace("boundary=", "")
+		.trim();
 
-		let content_length = parseInt(req.headers["content-length"]!);
-		console.log(content_length);
-		let file_end_boundary = parse_boundary(file_boundary).trim() + "--";
+	const attachment = await get_attachment(attachment_id);
+	const file_extension = attachment.filename.match(/\.[^.]+$/);
+	let filename = `${attachment.id}${file_extension && file_extension[0] || ""}`;
 
-		let progress = 0;
+	let content_length = parseInt(req.headers["content-length"]!);
+	let file_end_boundary = parse_boundary(file_boundary).trim() + "--";
 
-		let first_chunk = true;
+	let progress = 0;
 
-		let headers = Buffer.alloc(0);
+	let first_chunk = true;
 
-		let data_size = 0;
+	let headers = Buffer.alloc(0);
 
-		// console.log(file_boundary);
-		// console.log(file_end_boundary);
+	let data_size = 0;
 
-		console.log(req.headers);
+	console.log(req.headers);
 
-		req.on("data", async (data: Uint8Array) => {
-			let buffer = Buffer.from(data);
+	let fileStream: fs.WriteStream = fs.createWriteStream(join(file_path, filename), {
+		encoding: "binary",
+		flags: "a"
+	});
 
-			progress ++;
+	req.on("data", (data: Uint8Array) => {
+		let buffer = Buffer.from(data);
 
-			if(data.byteLength > data_size)
-				data_size = data.byteLength;
+		progress++;
 
-			if (first_chunk) {
-				first_chunk = false;
+		if (data.byteLength > data_size) data_size = data.byteLength;
 
-				if (
-					buffer
+		if (first_chunk) {
+			first_chunk = false;
+
+			if (
+				buffer
+					.toString()
+					.trim()
+					.startsWith("--" + file_boundary) &&
+				buffer.toString().trim().endsWith(file_end_boundary)
+			) {
+				console.log("One chunk only");
+
+				fs.writeFileSync(join(file_path, filename), "", "binary");
+				if (!filename)
+					filename = buffer
 						.toString()
-						.trim()
-						.startsWith("--" + file_boundary) &&
-					buffer.toString().trim().endsWith(file_end_boundary)
-				) {
-					console.log("One chunk only");
-					if (!filename)
-						filename = buffer
-							.toString()
-							.match(/filename="([^"]+)"/)![0]
-							.replace('filename="', "")
-							.replace('"', "");
+						.match(/filename="([^"]+)"/)![0]
+						.replace('filename="', "")
+						.replace('"', "");
 
-					const headers_end_index =
-						buffer.indexOf(
-							"\r\n\r\n",
-							buffer.indexOf(Buffer.from("--" + file_boundary)),
-						) + 4;
-					const end_boundary_index =
-						buffer.indexOf(Buffer.from(file_end_boundary)) - 4;
+				const headers_end_index =
+					buffer.indexOf(
+						"\r\n\r\n",
+						buffer.indexOf(Buffer.from("--" + file_boundary)),
+					) + 4;
+				const end_boundary_index =
+					buffer.indexOf(Buffer.from(file_end_boundary)) - 4;
 
-					const chunk_content = buffer.slice(
-						headers_end_index,
-						end_boundary_index -
-							Buffer.from(file_end_boundary).length,
-					);
+				const chunk_content = buffer.slice(
+					headers_end_index,
+					end_boundary_index - Buffer.from(file_end_boundary).length,
+				);
 
-					await fs.promises.writeFile(
-						join(file_path, filename),
-						chunk_content,
-						{
-							flag: "w",
-							encoding: "binary"
-						},
-					);
-					// start of content
+				fileStream.write(chunk_content);
+				// start of content
 
-					// write raw request
-					await fs.promises.writeFile(
-						join(file_path, filename.replace(".png", ".bin")),
-						data,
-						{
-							flag: "w",
-							encoding: "binary"
-						},
-					);
+				fileStream.close();
+				next();
+			} else if (
+				buffer
+					.toString()
+					.trim()
+					.startsWith("--" + file_boundary)
+			) {
+				console.log("Start");
+				// file
 
+				fs.writeFileSync(join(file_path, filename), "", "binary");
+				if (!filename)
+					filename = buffer
+						.toString("binary")
+						.match(/filename="([^"]+)"/)![0]
+						.replace('filename="', "")
+						.replace('"', "");
 
-					return next();
-				} else if (
-					buffer
-						.toString()
-						.trim()
-						.startsWith("--" + file_boundary)
-				) {
-					console.log("start");
-					if (!filename)
-						filename = buffer
-							.toString("binary")
-							.match(/filename="([^"]+)"/)![0]
-							.replace('filename="', "")
-							.replace('"', "");
+				const headers_end_index =
+					buffer.indexOf(
+						"\r\n\r\n",
+						buffer.indexOf('name="profile_picture"'),
+					) + 4;
 
-					// .(Buffer.from("--" + file_boundary)
-					const headers_end_index =
-						buffer.indexOf(
-							"\r\n\r\n",
-							buffer.indexOf('name="profile_picture"'),
-						) + 4;
+				headers = buffer.slice(0, headers_end_index);
 
-					headers = buffer.slice(0, headers_end_index);
+				const chunk_content = buffer.slice(
+					headers_end_index,
+					buffer.length,
+				);
 
-					const chunk_content = buffer.slice(
-						headers_end_index,
-						buffer.length,
-					);
+				fileStream.write(chunk_content);
+				// content end
 
-					await fs.promises.writeFile(
-						join(file_path, filename),
-						chunk_content,
-						"binary"
-					);
-					// content end
-
-
-					console.log(headers.toString());
-
-
-					// write raw request
-					// await fs.promises.writeFile(
-					// 	join(file_path, filename.replace(".png", ".bin")),
-					// data.toString(),
-					// "utf-8"
-					// );
-				}
-			} else {
-
-
-				// write raw request
-				// await fs.promises.appendFile(
-				// 	join(file_path, filename!.replace(".png", ".bin")),
-				// 	data.toString(),
-				// 	"utf-8"
-				// );
-
-				if (
-					progress * data_size >=
-					content_length
-				) {
-					console.log("Finished");
-					const end_boundary_index =
-						buffer.indexOf(Buffer.from(file_end_boundary, "binary"));
-
-					// let last_index = 0;
-					// let ocurrences = buffer.filter((v)=>"\r").length;
-					// let temp_buffer = Buffer.copyBytesFrom(buffer);
-					// for(let i = 0; i < ocurrences; i++){
-					// 	if(ocurrences - i === 1){
-					// 		// ocurrence i'm looking for
-					// 		last_index = temp_buffer.indexOf("\r");
-					// 		break;
-					// 	}
-					//
-					// 	if(temp_buffer.indexOf("\r") !== temp_buffer.lastIndexOf("\r")){
-					// 		temp_buffer = temp_buffer.slice(last_index, temp_buffer.length);
-					// 	}else{
-					// 		break;
-					// 	}
-					// }
-
-					let ending_index = buffer.slice(0, buffer.lastIndexOf(Buffer.from("\r"))).lastIndexOf(Buffer.from("\r"));
-
-					const chunk_content = buffer.slice(
-						0,
-						ending_index
-					);
-
-					await fs.promises.appendFile(
-						join(file_path, filename!),
-						chunk_content,
-						"binary",
-					);
-
-					if (is_profile_picture) {
-						try {
-							const auth_obj = new Auth({
-								token: Auth.verify_auth_token(auth),
-							});
-							const user_id = auth_obj.user_id;
-							const db = ChatAppDatabase.getInstance();
-							await db.exec_db(
-								User.toPatch(user_id, {
-									profile_picture: join(`public/profile-pictures`, filename!),
-								}),
-							);
-						} catch (err: any) {
-							console.log(err.message);
-							throw err;
-						}
-					}
-
-
-					next();
-					// content part
-				} else {
-					await fs.promises.appendFile(
-						join(file_path, filename!),
-						data,
-						"binary",
-					);
-				}
 			}
-		});
+		} else {
+			if (progress * data_size < content_length)
+				fileStream.write(data);
+			else{
+				let ending_index = buffer
+					.slice(0, buffer.lastIndexOf(Buffer.from("\r")))
+					.lastIndexOf(Buffer.from("\r"));
 
-		req.on("error", () => {
-			return resp.sendStatus(500);
-		});
-	};
+				const chunk_content = buffer.slice(0, ending_index);
+
+				fileStream.write(chunk_content);
+
+				EVENT_EMITTER.emit(`received-file-${attachment.id}`);
+
+				console.log("Finished");
+				fileStream.close();
+				next();
+			}
+		}
+	});
+
+	req.on("error", () => {
+		fileStream.close();
+		return resp.sendStatus(500);
+	});
 }
 
 function parse_boundary(boundary: string): string {

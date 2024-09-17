@@ -2,9 +2,7 @@ import { join } from "path";
 import fs from "fs";
 import { NextFunction, Request, Response } from "express";
 import { Auth } from "../../types/auth";
-import { User } from "../../types/user";
-import { ChatAppDatabase } from "../db";
-import { get_attachment } from "../functions/messages";
+import { get_attachments } from "../functions/messages";
 import { EVENT_EMITTER } from "../constants";
 
 export async function receive_file_middleware(
@@ -18,11 +16,11 @@ export async function receive_file_middleware(
     )
         return resp.sendStatus(400);
 
-    const attachment_id: string | undefined =
-        req.query.attachment_id?.toString();
+    const message_id: string | undefined =
+        req.query.message_id?.toString();
 
-    // check attachment
-    if (!attachment_id) return resp.sendStatus(401);
+    // check message_id
+    if (!message_id) return resp.sendStatus(401);
 
     const auth = req.auth!;
     const auth_obj = new Auth({ token: Auth.verify_auth_token(auth) });
@@ -37,22 +35,19 @@ export async function receive_file_middleware(
         .replace("boundary=", "")
         .trim();
 
-    const attachment = await get_attachment(attachment_id);
-    const file_extension = attachment.filename.match(/\.[^.]+$/);
-    let filename = `${attachment.id}${(file_extension && file_extension[0]) || ""}`;
+    const attachments = await get_attachments(message_id);
+	const filenames = attachments.map((attachment)=>{
+		const file_extension = attachment.filename.match(/\.[^.]+$/);
+		return `${attachment.id}${(file_extension && file_extension[0]) || ""}`;
+	});
+
+	const filename = filenames[0]; // temporary, needs to support multi files later
 
     let content_length = parseInt(req.headers["content-length"]!);
-    let file_end_boundary = parse_boundary(file_boundary).trim() + "--";
-
     let progress = 0;
 
     let first_chunk = true;
-
-    let headers = Buffer.alloc(0);
-
     let data_size = 0;
-
-    console.log(req.headers);
 
     let fileStream: fs.WriteStream = fs.createWriteStream(
         join(file_path, filename),
@@ -150,7 +145,7 @@ export async function receive_file_middleware(
 
                 fileStream.write(chunk_content);
 
-                EVENT_EMITTER.emit(`received-file-${attachment.id}`);
+                EVENT_EMITTER.emit(`received-file-${attachments[0].id}`); // temporary solution for single file attachment send
 
                 console.log("Finished");
                 fileStream.close();

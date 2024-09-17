@@ -3,6 +3,7 @@ import { Attachment, IAttachment, IChat, IMessage, Message } from "../../types/m
 import { ChatAppDatabase } from "../db";
 import { MessageUpdateParams } from "../../types/types";
 import { IUser, User } from "../../types/user";
+import { parse_attachments_to_insert } from "../functions";
 
 export async function get_messages(
 	sender_id: string,
@@ -62,26 +63,24 @@ export async function get_single_message(
 	return new Message({...messages[0]});
 }
 
-export async function get_attachment(attachment_id: string): Promise<IAttachment>{
+export async function get_attachments(message_id: string): Promise<IAttachment[]>{
 	const db = await ChatAppDatabase.getInstance().initDB();
 
-	const query: QueryResult<IAttachment> = (await db.query(`SELECT * FROM attachments WHERE id = '${attachment_id}'`));
+	const query: QueryResult<IAttachment> = (await db.query(`SELECT * FROM attachments WHERE message_id = '${message_id}'`));
 	if(query.rowCount === 0)
-		throw Error("unknown attachment "+ `SELECT * FROM attachments WHERE id = '${attachment_id}'`);
+		throw Error("unknown attachment "+ `SELECT * FROM attachments WHERE message_id = '${message_id}'`);
 
-	return query.rows[0];
+	return query.rows;
 }
 
 export async function create_message(message: Message) {
 	const db = ChatAppDatabase.getInstance();
-
-	if(message.attachment){
-		await db.exec_db(message.attachment.toInsert());
-		await db.exec_db(new Message({...message, attachment: undefined, attachment_id: message.attachment.id}).toInsert());
+	if(message.attachments){
+		await db.exec_db(new Message({...message}).toInsert());
+		await db.exec_db(parse_attachments_to_insert(message.attachments.map((a)=>a.toInsertValues())));
 	}else {
 		await db.exec_db(message.toInsert());
 	}
-
 }
 
 export async function patch_message(params: MessageUpdateParams) {

@@ -70,7 +70,6 @@ export async function message_put_middleware(
 ) {
 	const auth = req.auth!;
 	const user_id = new Auth({ token: Auth.verify_auth_token(auth) });
-	const result = matchedData(req);
 
 	try {
 		const message = new Message({
@@ -78,20 +77,21 @@ export async function message_put_middleware(
 			sender_id: user_id.user_id,
 		});
 
-		let attachment: IAttachment | undefined;
-
-		if(req.body.attachment){
+		if(req.body.attachments){
 			// wait for message file for 10 seconds and if not receives delete message
 
-			const id = v4();
-			const file_extension = req.body.attachment.filename.match(/\.[^.]+$/);
-			attachment = {
-				...req.body.attachment,
-				id: id,
-				date: Date.now(),
-				path: `files/${user_id.user_id}/${id}${file_extension && file_extension[0] || ""}`
-			};
-			message.attachment = new Attachment(attachment!);
+			for(const attachment of (req.body.attachments || []) as IAttachment[]){
+				const file_extension = attachment.filename.match(/\.[^.]+$/);
+
+				const id = v4();
+				message.attachments = [...message.attachments || [], new Attachment({
+					...attachment,
+					id: id,
+					message_id: message.id,
+					date: Date.now(),
+					path: `files/${user_id.user_id}/${id}${file_extension && file_extension[0] || ""}`
+				})];
+			}
 		}
 
 		// creation_date and last_modified_date must have same value on creation
@@ -101,11 +101,9 @@ export async function message_put_middleware(
 		await create_message(message);
 		EVENT_EMITTER.emit(`update-${message.receiver_id}`, [user_id.user_id]);
 
-		if(attachment){
-
+		if(req.body.attachments && req.body.attachments.length > 0){
 			EVENT_EMITTER.on(`received-file-${req.body.attachment.id}`, ()=> receive_file_listener(message, user_id.user_id));
-
-			return resp.send({message_id: message.id, attachment_id: attachment!.id});
+			return resp.send({message_id: message.id});
 		}
 
 		return resp.send({message_id: message.id});

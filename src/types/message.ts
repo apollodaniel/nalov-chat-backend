@@ -20,8 +20,7 @@ export interface IMessage {
 	seen_date: number | null;
 	sender_id: string;
 	receiver_id: string;
-	attachment_id?: string;
-	attachment?: Attachment;
+	attachments?: Attachment[];
 }
 
 export class Message {
@@ -32,10 +31,9 @@ export class Message {
 	sender_id: string;
 	receiver_id: string;
 	seen_date: number | null;
-	attachment_id?: string;
 
 	// internal acess only
-	attachment?: Attachment;
+	attachments?: Attachment[];
 
 	constructor(obj: IMessage) {
 		if (obj.id) this.id = obj.id;
@@ -46,12 +44,9 @@ export class Message {
 		this.sender_id = obj.sender_id;
 		this.receiver_id = obj.receiver_id;
 		this.seen_date = obj.seen_date;
-		this.attachment_id = obj.attachment_id;
 	}
 
 	toInsert(): string {
-		if(this.attachment_id)
-			return `INSERT INTO messages(id, content, creation_date, last_modified_date, sender_id, receiver_id, attachment_id) values ('${this.id}', '${this.content}', ${this.creation_date}, ${this.last_modified_date}, '${this.sender_id}', '${this.receiver_id}', '${this.attachment_id}')`;
 		return `INSERT INTO messages(id, content, creation_date, last_modified_date, sender_id, receiver_id) values ('${this.id}', '${this.content}', ${this.creation_date}, ${this.last_modified_date}, '${this.sender_id}', '${this.receiver_id}')`;
 	}
 
@@ -75,6 +70,7 @@ export class Message {
 
 export interface IAttachment {
 	id: string;
+	message_id: string;
 	filename: string;
 	mimetype: string;
 	path: string;
@@ -84,6 +80,7 @@ export interface IAttachment {
 
 export class Attachment {
 	id: string;
+	message_id: string;
 	filename: string;
 	mimetype: string;
 	path: string;
@@ -92,6 +89,7 @@ export class Attachment {
 
 	constructor(obj: IAttachment) {
 		this.id = obj.id;
+		this.message_id = obj.message_id;
 		this.filename = obj.filename;
 		this.mimetype = obj.mimetype;
 		this.path = obj.path;
@@ -100,7 +98,11 @@ export class Attachment {
 	}
 
 	toInsert(): string {
-		return `INSERT INTO attachments(id, filename, mime_type, path, byte_length, date) values ('${this.id}', '${this.filename}', '${this.mimetype}', '${this.path}', ${this.byte_length}, ${this.date})`;
+		return `INSERT INTO attachments(id, message_id, filename, mime_type, path, byte_length, date) values ('${this.id}','${this.message_id}', '${this.filename}', '${this.mimetype}', '${this.path}', ${this.byte_length}, ${this.date})`;
+	}
+
+	toInsertValues(): string {
+		return `('${this.id}','${this.message_id}', '${this.filename}', '${this.mimetype}', '${this.path}', ${this.byte_length}, ${this.date})`;
 	}
 
 	static toDelete(id: string): string {

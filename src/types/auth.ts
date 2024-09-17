@@ -26,7 +26,7 @@ export class Auth implements IDbType{
 	}
 
 	generate_auth_token(): string {
-		return jwt.sign({refresh_token: this.token }, process.env.JWT_AUTH_TOKEN!, {expiresIn: '15M'});
+		return jwt.sign({refresh_token: this.token }, process.env.JWT_AUTH_TOKEN!, {expiresIn: '30M'});
 	}
 
 	static verify_auth_token(auth_token: string): string {

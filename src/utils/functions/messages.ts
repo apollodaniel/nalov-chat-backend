@@ -16,8 +16,6 @@ export async function get_messages(
 		)) as QueryResult<IMessage>
 	).rows;
 
-	console.log(`UPDATE messages SET seen_date = ${Date.now()} WHERE seen_date IS NULL AND sender_id = '${receiver_id}' AND receiver_id = '${sender_id}'`)
-
 	await db.exec_db(`UPDATE messages SET seen_date = ${Date.now()} WHERE seen_date IS NULL AND sender_id = '${receiver_id}' AND receiver_id = '${sender_id}'`);
 
 	return messages.map((m) => new Message(m));
@@ -79,10 +77,8 @@ export async function create_message(message: Message) {
 
 	if(message.attachment){
 		await db.exec_db(message.attachment.toInsert());
-
 		await db.exec_db(new Message({...message, attachment: undefined, attachment_id: message.attachment.id}).toInsert());
 	}else {
-
 		await db.exec_db(message.toInsert());
 	}
 

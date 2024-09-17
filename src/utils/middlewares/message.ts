@@ -78,8 +78,6 @@ export async function message_put_middleware(
 			sender_id: user_id.user_id,
 		});
 
-
-
 		let attachment: IAttachment | undefined;
 
 		if(req.body.attachment){
@@ -95,6 +93,10 @@ export async function message_put_middleware(
 			};
 			message.attachment = new Attachment(attachment!);
 		}
+
+		// creation_date and last_modified_date must have same value on creation
+		if(message.creation_date != message.last_modified_date)
+			message.last_modified_date = message.creation_date;
 
 		await create_message(message);
 		EVENT_EMITTER.emit(`update-${message.receiver_id}`, [user_id.user_id]);

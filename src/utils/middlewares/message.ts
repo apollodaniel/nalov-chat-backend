@@ -121,7 +121,7 @@ export async function message_put_middleware(
 					id: id,
 					message_id: message.id,
 					date: Date.now(),
-					path: `files/${message.id}/${id}${file_extension && file_extension[0] || ""}`
+					path: `files/chats/${message.sender_id}_${message.receiver_id}/${message.id}/${id}${file_extension && file_extension[0] || ""}`
 				})];
 			}
 		}

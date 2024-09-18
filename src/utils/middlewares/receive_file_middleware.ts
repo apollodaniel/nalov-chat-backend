@@ -1,11 +1,9 @@
-import { join } from "path";
 import fs from "fs";
 import { NextFunction, Request, Response } from "express";
 import { Auth } from "../../types/auth";
-import { get_attachments, update_attachment_mimetype } from "../functions/messages";
+import { get_attachments, get_messages, get_single_message, update_attachment_mimetype } from "../functions/messages";
 import { EVENT_EMITTER } from "../constants";
 import { IAttachment } from "../../types/message";
-import { walkUpBindingElementsAndPatterns } from "typescript";
 
 export async function receive_file_middleware(
     req: Request,
@@ -27,8 +25,6 @@ export async function receive_file_middleware(
     // check message_id
     if (!message_id) return resp.sendStatus(401);
 
-    let file_path = `./files/${message_id}/`;
-
     let file_boundary = req.headers["content-type"]
         .split(";")[1]
         .replace("boundary=", "")
@@ -44,22 +40,24 @@ export async function receive_file_middleware(
     ).map((a: IAttachment) => {
         return {
             ...a,
-            fileStream: fs.createWriteStream(join(file_path, filename(a)), {
+            fileStream: fs.createWriteStream(a.path, {
                 encoding: "binary",
                 flags: "a",
             }),
         } as WritableAttachment;
     });
 
-    if (attachments.length != 0 && !fs.existsSync(file_path))
-        fs.mkdirSync(file_path);
+    if (attachments.length != 0 ){
+		let splitted_path = attachments[0].path.split("/");
+		splitted_path = splitted_path.filter((_v, _index)=>_index!=splitted_path.length-1);
+		const dir_path = splitted_path.join("/");
+		console.log(dir_path);
+		if(!fs.existsSync(dir_path)) fs.mkdirSync(dir_path, {recursive: true});
+	}
+
 
     let progress = 0;
     let overallProgress = 0;
-    const content_length = attachments
-        .map((a) => a.byte_length)
-        .reduce((p, n) => Number(p) + Number(n));
-
 
     let first_chunk = true;
     // let data_size = 0;
@@ -190,7 +188,7 @@ export async function receive_file_middleware(
             ) {
                 console.log("Start");
 
-                // fs.writeFileSync(join(file_path, filename(attachments[0])), "", "binary");
+
                 const content = buffer.slice(
                     headers_end_index,
                     buffer.byteLength,

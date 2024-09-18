@@ -17,8 +17,8 @@ export function static_files_middleware(req: Request, resp: Response, next: Next
 	const user_id = new Auth({token: Auth.verify_auth_token(req.auth!)}).user_id;
 
 	try{
-		const user_id_path = splitted_path[1].trim();//.replace("files/", "").split("/")[0];
-		if(user_id_path === user_id){
+		if(splitted_path.length >= 3 && splitted_path[3].trim().split("_").find((a) => a === user_id)){
+			// user has the permission of that chat
 			return next();
 		}
 		return resp.sendStatus(401);

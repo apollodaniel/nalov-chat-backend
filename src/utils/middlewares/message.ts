@@ -73,11 +73,11 @@ export async function message_get_single_middleware(
 	next: NextFunction,
 ) {
 	const auth = req.auth!;
-	const user_id = new Auth({ token: Auth.verify_auth_token(auth) });
+	const auth_obj = new Auth({ token: Auth.verify_auth_token(auth) });
 	const message_id: string = req.query.id as string;
 
 	try {
-		const message = await get_messages(user_id.user_id, message_id);
+		const message = await get_messages(auth_obj.user_id, message_id);
 		return resp.status(200).send(message);
 	} catch (err: any) {
 		console.log(err.message);
@@ -155,14 +155,16 @@ export async function message_patch_middleware(
 	next: NextFunction,
 ) {
 	const auth = req.auth!;
-	const user_id = new Auth({ token: Auth.verify_auth_token(auth) });
+	const auth_obj = new Auth({ token: Auth.verify_auth_token(auth) });
 	const message_id: string = req.params.id as string;
 
-	const message = await get_single_message(user_id.user_id, message_id);
+	const message = await get_single_message(auth_obj.user_id, message_id);
 
 	try {
+		if(!(await check_message_permission(auth_obj.user_id, message_id)))
+			return resp.sendStatus(401); // user that requested the resource is not allowed to read it
 		await patch_message({ id: message_id, ...req.body });
-		EVENT_EMITTER.emit(`update-${message.receiver_id}`, [user_id.user_id]);
+		EVENT_EMITTER.emit(`update-${message.receiver_id}`, [auth_obj.user_id]);
 		return resp.sendStatus(200);
 	} catch (err: any) {
 		console.log(err.message);

@@ -4,6 +4,8 @@ import { NextFunction, Request, Response } from "express";
 import { Auth } from "../../types/auth";
 import { get_attachments } from "../functions/messages";
 import { EVENT_EMITTER } from "../constants";
+import { IAttachment } from "../../types/message";
+import { walkUpBindingElementsAndPatterns } from "typescript";
 
 export async function receive_file_middleware(
     req: Request,
@@ -16,56 +18,80 @@ export async function receive_file_middleware(
     )
         return resp.sendStatus(400);
 
-    const message_id: string | undefined =
-        req.query.message_id?.toString();
+    interface WritableAttachment extends IAttachment {
+        fileStream: fs.WriteStream;
+    }
+
+    const message_id: string | undefined = req.query.message_id?.toString();
 
     // check message_id
     if (!message_id) return resp.sendStatus(401);
 
-    const auth = req.auth!;
-    const auth_obj = new Auth({ token: Auth.verify_auth_token(auth) });
-    const user_id = auth_obj.user_id;
+    let file_path = `./files/${message_id}/`;
 
-    let file_path = `./files/${user_id}/`;
-
-    if (!fs.existsSync(file_path)) fs.mkdirSync(file_path);
-
-    const file_boundary = req.headers["content-type"]
+    let file_boundary = req.headers["content-type"]
         .split(";")[1]
         .replace("boundary=", "")
         .trim();
 
-    const attachments = await get_attachments(message_id);
-	const filenames = attachments.map((attachment)=>{
-		const file_extension = attachment.filename.match(/\.[^.]+$/);
-		return `${attachment.id}${(file_extension && file_extension[0]) || ""}`;
-	});
+    let filename = (attachment: IAttachment) => {
+        const file_extension = attachment.filename.match(/\.[^.]+$/);
+        return `${attachment.id}${(file_extension && file_extension[0]) || ""}`;
+    };
 
-	const filename = filenames[0]; // temporary, needs to support multi files later
+    let attachments: WritableAttachment[] = (
+        await get_attachments(message_id)
+    ).map((a: IAttachment) => {
+        return {
+            ...a,
+            fileStream: fs.createWriteStream(join(file_path, filename(a)), {
+                encoding: "binary",
+                flags: "a",
+            }),
+        } as WritableAttachment;
+    });
 
-    let content_length = parseInt(req.headers["content-length"]!);
+    if (attachments.length != 0 && !fs.existsSync(file_path))
+        fs.mkdirSync(file_path);
+
     let progress = 0;
+    let overallProgress = 0;
+    const content_length = attachments
+        .map((a) => a.byte_length)
+        .reduce((p, n) => Number(p) + Number(n));
+
 
     let first_chunk = true;
-    let data_size = 0;
+    // let data_size = 0;
 
-    let fileStream: fs.WriteStream = fs.createWriteStream(
-        join(file_path, filename),
-        {
-            encoding: "binary",
-            flags: "a",
-        },
-    );
+    // let rawFileStream: fs.WriteStream = fs.createWriteStream(
+    //     join(file_path, "raw_file"),
+    //     {
+    //         flags: "a",
+    //         encoding: "binary",
+    //     },
+    // );
+    //
+    let actual_file_header = Buffer.alloc(0);
 
     req.on("data", (data: Uint8Array) => {
         let buffer = Buffer.from(data);
 
-        progress++;
+        if (attachments.length === 0)
+            throw Error("no more attachments for this data");
 
-        if (data.byteLength > data_size) data_size = data.byteLength;
+        // rawFileStream.write(data);
+
+        // if (data.byteLength > data_size) data_size = data.byteLength;
 
         if (first_chunk) {
             first_chunk = false;
+
+            // fs.writeFileSync(
+            // 	join(file_path, filename(attachments[0])),
+            // 	"",
+            // 	"binary",
+            // );
 
             const matched_boundary = buffer
                 .toString()
@@ -75,7 +101,7 @@ export async function receive_file_middleware(
                         file_boundary.length,
                 )
                 .trim();
-            const ocurrences = buffer
+            const boundary_ocurrences = buffer
                 .toString()
                 .substring(
                     buffer.toString().indexOf(matched_boundary),
@@ -87,76 +113,185 @@ export async function receive_file_middleware(
                     (c) =>
                         c.trim().replace("\n", "").replace("\r", "").length !=
                         0,
-                ).length;
-
-			// expected one file only from request
-			if(ocurrences > 2)
-				return resp.sendStatus(400);
-
-			// one chunk only
-            if (ocurrences > 1) {
-                console.log("One chunk only");
-				const boundary_end = buffer.lastIndexOf(
-                    Buffer.from(matched_boundary),
                 );
 
-                const headers_end_index =
-                    buffer.indexOf(
-                        "\r\n\r\n",
-                        buffer.indexOf(Buffer.from(matched_boundary)),
-                    ) + 4;
+            let ocurrences = boundary_ocurrences.length;
 
-                fs.writeFileSync(join(file_path, filename), "", "binary");
+            const headers_end_index =
+                buffer.indexOf(
+                    "\r\n\r\n",
+                    buffer.indexOf(Buffer.from(matched_boundary)),
+                ) + 4;
 
-                fileStream.write(buffer.slice(
+            // disabled - expected one file only from request
+            // if (ocurrences > 2) return resp.sendStatus(400);
+
+            actual_file_header = buffer.slice(0, headers_end_index);
+
+            const matched_field_name = actual_file_header
+                .toString("binary")
+                .match(/name=".+?"/);
+
+            if (!matched_field_name)
+                throw new Error(
+                    `no matches for field name ${actual_file_header}`,
+                );
+
+            let field_name = matched_field_name[0]
+                .replace('name="', "")
+                .replace('"', "");
+
+            attachments = attachments.sort((at) =>
+                at.id === matched_field_name![0] ? -1 : 0,
+            );
+
+            if (attachments.length === 0 || attachments[0].id !== field_name)
+                throw new Error(
+                    `no matched attachment for file with id ${field_name} and name ${filename(attachments[0])}`,
+                );
+
+            const boundary_end = buffer.lastIndexOf(
+                Buffer.from(matched_boundary),
+            );
+
+            if (
+                ocurrences > 1 &&
+                buffer.slice(boundary_end, buffer.byteLength).byteLength === 0
+            ) {
+                // one chunk only
+                console.log("One chunk only");
+
+                const content = buffer.slice(
                     headers_end_index,
                     boundary_end + matched_boundary.length + 4,
-                ));
+                );
+                attachments[0].fileStream.write(content);
+                progress += Number(content.byteLength);
+                overallProgress += Number(content.byteLength);
 
-                fileStream.close();
+                attachments[0].fileStream.close();
                 next();
-            } else if ( // start chunk only
-				ocurrences === 1
+            } else if (
+                // start chunk only
+                ocurrences === 1
             ) {
                 console.log("Start");
 
-                const headers_end_index =
-                    buffer.indexOf(
-                        "\r\n\r\n",
-                        buffer.indexOf(Buffer.from(matched_boundary)),
-                    ) + 4;
-
-                fs.writeFileSync(join(file_path, filename), "", "binary");
-
-                fileStream.write(buffer.slice(
+                // fs.writeFileSync(join(file_path, filename(attachments[0])), "", "binary");
+                const content = buffer.slice(
                     headers_end_index,
-                    buffer.length,
-                ));
-            }else // no file being sent // invalid request
-				return resp.sendStatus(400);
+                    buffer.byteLength,
+                );
+                attachments[0].fileStream.write(content);
+
+                progress += Number(content.byteLength);
+                overallProgress += Number(content.byteLength);
+            } // no file being sent // invalid request
+            else return resp.sendStatus(400);
         } else {
-            if (progress * data_size < content_length) fileStream.write(data);
-            else {
-                let ending_index = buffer
-                    .slice(0, buffer.lastIndexOf(Buffer.from("\r")))
-                    .lastIndexOf(Buffer.from("\r"));
+            // const file_length: number =
+            // 	Number(attachments[0].byte_length) +
+            // 	Number(actual_file_header.byteLength) +
+            // 	Number(Buffer.from(file_boundary).byteLength) +
+            // 	4; //  2 bytes for carriage returns, 2 for --
 
-                const chunk_content = buffer.slice(0, ending_index);
+            if (
+                progress + Number(data.byteLength) <=
+                Number(attachments[0].byte_length)
+            ) {
+                attachments[0].fileStream.write(data);
+                progress += Number(data.byteLength);
+                overallProgress += Number(data.byteLength);
+            } else {
+                let previous_content = buffer.slice(
+                    0,
+                    buffer.indexOf(file_boundary),
+                );
+                previous_content = previous_content.slice(
+                    0,
+                    previous_content.lastIndexOf(Buffer.from("\r")) + 2,
+                );
 
-                fileStream.write(chunk_content);
+                attachments[0].fileStream.write(previous_content);
+                progress += Number(previous_content.byteLength);
+                overallProgress += Number(previous_content.byteLength);
 
                 EVENT_EMITTER.emit(`received-file-${attachments[0].id}`); // temporary solution for single file attachment send
 
-                console.log("Finished");
-                fileStream.close();
+                console.log(`Finished: ${attachments[0].filename}`);
 
-                next();
+                let post_content = buffer.slice(
+                    previous_content.byteLength,
+                    buffer.length,
+                );
+
+                const post_content_check = post_content
+                    .slice(post_content.indexOf("\r"), post_content.byteLength)
+                    .toString()
+                    .replace("\r", "")
+                    .replace("\n", "")
+                    .trim();
+                if (post_content_check.length !== 0) {
+                    const content_type_match = post_content
+                        .toString("binary")
+                        .match(/Content-Type:\ .+\r\n/);
+
+                    const headers_end_index =
+                        post_content.indexOf(content_type_match![0]) +
+                        Number(Buffer.from(content_type_match![0]).byteLength) +
+                        2;
+                    const headers = post_content.slice(0, headers_end_index);
+
+                    const matched_field_name = headers
+                        .toString("binary")
+                        .match(/name=".+?"/);
+
+                    post_content = post_content.slice(
+                        headers_end_index,
+                        post_content.byteLength,
+                    );
+
+                    // close filestream and remove current attachment from list
+                    attachments[0].fileStream.close();
+                    attachments = attachments.filter(
+                        (a) => attachments[0].id !== a.id,
+                    );
+
+                    // put first attachment as being the current file
+                    attachments = attachments.sort((at) =>
+                        at.id ===
+                        matched_field_name![0]
+                            .replace('name="', "")
+                            .replace('"', "")
+                            ? -1
+                            : 0,
+                    );
+
+                    actual_file_header = headers;
+
+                    if (!matched_field_name) {
+                        // next chunk
+                        first_chunk = true;
+                    } else {
+                        // prepare next file filestream
+                        // attachments[0].fileStream = attachments[0].fileStream;
+                        attachments[0].fileStream.write(post_content);
+                        progress = Number(post_content.byteLength);
+                        overallProgress += Number(post_content.byteLength);
+                    }
+                }else{
+					// rawFileStream.close();
+					next()
+				}
+
+
             }
         }
     });
 
     req.on("error", () => {
-        fileStream.close();
+        attachments.forEach((a) => a.fileStream.close());
+        // rawFileStream.close();
         return resp.sendStatus(500);
     });
 }

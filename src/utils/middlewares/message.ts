@@ -1,16 +1,18 @@
 import { NextFunction, Request, Response } from "express";
 import { Auth } from "../../types/auth";
 import {
+    check_message_permission,
 	create_message,
 	delete_message,
+	get_attachments,
 	get_chats,
 	get_messages,
 	get_single_message,
 	patch_message,
 } from "../functions/messages";
 import { Attachment, IAttachment, IChat, Message } from "../../types/message";
-import { matchedData } from "express-validator";
-import { EVENT_EMITTER } from "../constants";
+import { body, matchedData } from "express-validator";
+import { error_map, EVENT_EMITTER } from "../constants";
 import EventEmitter2 from "eventemitter2";
 import { v4 } from "uuid";
 
@@ -37,6 +39,34 @@ export async function message_get_middleware(
 }
 
 
+export async function message_get_attachments_middleware(
+	req: Request,
+	resp: Response,
+	next: NextFunction,
+) {
+	const auth = req.auth!;
+	const user_id = new Auth({ token: Auth.verify_auth_token(auth) }).user_id;
+	const message_id = req.params.id;
+
+	try {
+		if(!(await check_message_permission(user_id, message_id)))
+			return resp.sendStatus(401); // user that requested the resource is not allowed to read it
+
+		const attachments = await get_attachments(message_id);
+
+		return resp
+			.status(200)
+			.send(attachments);
+	} catch (err: any) {
+		console.log(err.message);
+		if(err.message = error_map.db_not_found.error_msg)
+			return resp.sendStatus(404);
+
+		return resp.sendStatus(500);
+	}
+}
+
+
 export async function message_get_single_middleware(
 	req: Request,
 	resp: Response,
@@ -51,6 +81,8 @@ export async function message_get_single_middleware(
 		return resp.status(200).send(message);
 	} catch (err: any) {
 		console.log(err.message);
+		if(err.message = error_map.db_not_found.error_msg)
+			return resp.sendStatus(404);
 		return resp.sendStatus(500);
 	}
 }
@@ -89,10 +121,12 @@ export async function message_put_middleware(
 					id: id,
 					message_id: message.id,
 					date: Date.now(),
-					path: `files/${user_id.user_id}/${id}${file_extension && file_extension[0] || ""}`
+					path: `files/${message.id}/${id}${file_extension && file_extension[0] || ""}`
 				})];
 			}
 		}
+
+		console.log(message);
 
 		// creation_date and last_modified_date must have same value on creation
 		if(message.creation_date != message.last_modified_date)
@@ -101,8 +135,10 @@ export async function message_put_middleware(
 		await create_message(message);
 		EVENT_EMITTER.emit(`update-${message.receiver_id}`, [user_id.user_id]);
 
-		if(req.body.attachments && req.body.attachments.length > 0){
-			EVENT_EMITTER.on(`received-file-${req.body.attachment.id}`, ()=> receive_file_listener(message, user_id.user_id));
+		if(message.attachments && message.attachments.length > 0){
+			// temporary solution to attachment.id - need to listen to all events of changed file, a generic event with message id
+			// and the attachment id being the parameter
+			EVENT_EMITTER.on(`received-file-${message.attachments![0].id}`, ()=> receive_file_listener(message, user_id.user_id));
 			return resp.send({message_id: message.id});
 		}
 

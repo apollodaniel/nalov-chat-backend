@@ -2,16 +2,18 @@ import { Router } from "express";
 import { body, checkSchema } from "express-validator";
 import {
 	MESSAGE_DELETE_SINGLE_VALIDATION,
+	MESSAGE_GET_ATTACHMENTS_VALIDATION,
 	MESSAGE_GET_SINGLE_VALIDATION,
 	MESSAGE_GET_VALIDATION,
 	MESSAGE_PATCH_VALIDATION,
 	MESSAGE_PUT_VALIDATION,
 } from "../utils/validation_schemas/message_validation";
-import { auth_validation_middleware } from "../utils/middlewares/validation_middleware";
+import { auth_validation_middleware, validation_middleware } from "../utils/middlewares/validation_middleware";
 import {
 	chat_listen_middleware,
 	chats_get_middleware,
 	message_delete_middleware,
+	message_get_attachments_middleware,
 	message_get_middleware,
 	message_get_single_middleware,
 	message_listen_middleware,
@@ -36,6 +38,14 @@ router.get(
 	auth_validation_middleware,
 	message_listen_middleware,
 );
+
+// get message attachments
+router.get(
+	"/api/messages/:id/attachments",
+	checkSchema(MESSAGE_GET_ATTACHMENTS_VALIDATION),
+	auth_validation_middleware,
+	message_get_attachments_middleware
+)
 
 router.get(
 	"/api/messages/:id",

@@ -4,6 +4,7 @@ import { ChatAppDatabase } from "../db";
 import { MessageUpdateParams } from "../../types/types";
 import { IUser, User } from "../../types/user";
 import { parse_attachments_to_insert } from "../functions";
+import { error_map } from "../constants";
 
 export async function get_messages(
 	sender_id: string,
@@ -49,6 +50,20 @@ export async function get_chats(user_id: string): Promise<IChat[]> {
 	return chats_parsed;
 }
 
+export async function check_message_permission(user_id: string, message_id: string){
+	const db = ChatAppDatabase.getInstance();
+	const messages: IMessage[] = (
+		(await db.query_db(
+			`SELECT * FROM messages WHERE id = '${message_id}'`,
+		)) as QueryResult<IMessage>
+	).rows;
+
+	if(messages.length === 0)
+		throw new Error("message not found");
+
+	return messages[0].sender_id === user_id || messages[0].receiver_id === user_id;
+}
+
 export async function get_single_message(
 	user_id: string,
 	message_id: string,
@@ -59,6 +74,10 @@ export async function get_single_message(
 			`SELECT * FROM messages WHERE id = '${message_id}' AND (sender_id = '${user_id}' OR receiver_id = '${user_id}')`,
 		)) as QueryResult<IMessage>
 	).rows;
+
+
+	if(messages.length === 0)
+		throw new Error(error_map.db_not_found.error_msg);
 
 	return new Message({...messages[0]});
 }

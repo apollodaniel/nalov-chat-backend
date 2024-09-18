@@ -13,6 +13,19 @@ export const MESSAGE_GET_SINGLE_VALIDATION: Schema = {
 	},
 };
 
+
+export const MESSAGE_GET_ATTACHMENTS_VALIDATION: Schema = {
+	id: {
+		in: ["params"],
+		notEmpty: {
+			errorMessage: "id must not be empty",
+		},
+		isString: {
+			errorMessage: "id must be a valid string",
+		},
+	},
+};
+
 export const MESSAGE_DELETE_SINGLE_VALIDATION: Schema = {
 	id: {
 		in: ["params"],

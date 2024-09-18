@@ -2,7 +2,7 @@ import { join } from "path";
 import fs from "fs";
 import { NextFunction, Request, Response } from "express";
 import { Auth } from "../../types/auth";
-import { get_attachments } from "../functions/messages";
+import { get_attachments, update_attachment_mimetype } from "../functions/messages";
 import { EVENT_EMITTER } from "../constants";
 import { IAttachment } from "../../types/message";
 import { walkUpBindingElementsAndPatterns } from "typescript";
@@ -141,6 +141,19 @@ export async function receive_file_middleware(
                 .replace('name="', "")
                 .replace('"', "");
 
+
+            const matched_mime_type = actual_file_header
+                .toString("binary")
+                .match(/Content-Type: .+\r\n/);
+
+			if(matched_mime_type && matched_mime_type[0]){
+				// change attachment mime type
+				let mime_type = matched_mime_type[0]
+							.replace('Content-Type: ', "")
+							.replace('\r\n', "").trim();
+				update_attachment_mimetype(attachments[0], mime_type);
+			}
+
             attachments = attachments.sort((at) =>
                 at.id === matched_field_name![0] ? -1 : 0,
             );
@@ -268,6 +281,17 @@ export async function receive_file_middleware(
                     );
 
                     actual_file_header = headers;
+					const matched_mime_type = actual_file_header
+						.toString("binary")
+                .match(/Content-Type: .+\r\n/);
+
+					if(matched_mime_type && matched_mime_type[0]){
+						// change attachment mime type
+						let mime_type = matched_mime_type[0]
+							.replace('Content-Type: ', "")
+							.replace('\r\n', "").trim();
+						update_attachment_mimetype(attachments[0], mime_type);
+					}
 
                     if (!matched_field_name) {
                         // next chunk

@@ -72,7 +72,7 @@ export interface IAttachment {
 	id: string;
 	message_id: string;
 	filename: string;
-	mimetype: string;
+	mime_type: string;
 	path: string;
 	byte_length: number;
 	date: number;
@@ -82,7 +82,7 @@ export class Attachment {
 	id: string;
 	message_id: string;
 	filename: string;
-	mimetype: string;
+	mime_type: string;
 	path: string;
 	byte_length: number;
 	date: number;
@@ -91,18 +91,22 @@ export class Attachment {
 		this.id = obj.id;
 		this.message_id = obj.message_id;
 		this.filename = obj.filename;
-		this.mimetype = obj.mimetype;
+		this.mime_type = obj.mime_type;
 		this.path = obj.path;
 		this.byte_length = obj.byte_length;
 		this.date = obj.date;
 	}
 
 	toInsert(): string {
-		return `INSERT INTO attachments(id, message_id, filename, mime_type, path, byte_length, date) values ('${this.id}','${this.message_id}', '${this.filename}', '${this.mimetype}', '${this.path}', ${this.byte_length}, ${this.date})`;
+		return `INSERT INTO attachments(id, message_id, filename, mime_type, path, byte_length, date) values ('${this.id}','${this.message_id}', '${this.filename}', '${this.mime_type}', '${this.path}', ${this.byte_length}, ${this.date})`;
 	}
 
 	toInsertValues(): string {
-		return `('${this.id}','${this.message_id}', '${this.filename}', '${this.mimetype}', '${this.path}', ${this.byte_length}, ${this.date})`;
+		return `('${this.id}','${this.message_id}', '${this.filename}', '${this.mime_type}', '${this.path}', ${this.byte_length}, ${this.date})`;
+	}
+
+	toUpdateMimeType({mimeType}: {mimeType: string}): string{
+		return `UPDATE attachments SET mime_type = '${mimeType}' WHERE id = '${this.id}'`;
 	}
 
 	static toDelete(id: string): string {

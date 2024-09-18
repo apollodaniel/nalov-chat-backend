@@ -91,6 +91,10 @@ export async function get_attachments(message_id: string): Promise<IAttachment[]
 
 	return query.rows;
 }
+export async function update_attachment_mimetype(attachment: IAttachment, mime_type: string){
+	const db = ChatAppDatabase.getInstance();
+	await db.exec_db(new Attachment(attachment).toUpdateMimeType({mimeType: mime_type}));
+}
 
 export async function create_message(message: Message) {
 	const db = ChatAppDatabase.getInstance();

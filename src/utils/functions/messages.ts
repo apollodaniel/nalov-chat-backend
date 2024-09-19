@@ -11,7 +11,6 @@ export async function get_messages(
 	receiver_id: string,
 ): Promise<Message[]> {
 	const db = ChatAppDatabase.getInstance();
-
 	const messages: IMessage[] = (
 		(await db.query_db(
 			`SELECT * FROM messages WHERE (sender_id = '${sender_id}' AND receiver_id = '${receiver_id}') OR (sender_id = '${receiver_id}' AND receiver_id = '${sender_id}') ORDER BY creation_date`,

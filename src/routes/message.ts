@@ -10,13 +10,13 @@ import {
 } from "../utils/validation_schemas/message_validation";
 import { auth_validation_middleware, validation_middleware } from "../utils/middlewares/validation_middleware";
 import {
-	chat_listen_middleware,
+	// chat_listen_middleware,
 	chats_get_middleware,
 	message_delete_middleware,
 	message_get_attachments_middleware,
 	message_get_middleware,
 	message_get_single_middleware,
-	message_listen_middleware,
+	// message_listen_middleware,
 	message_patch_middleware,
 	message_put_middleware,
 } from "../utils/middlewares/message";
@@ -33,11 +33,11 @@ router.get(
 );
 
 // listen messages
-router.get(
-	"/api/messages/listen",
-	auth_validation_middleware,
-	message_listen_middleware,
-);
+// router.get(
+// 	"/api/messages/listen",
+// 	auth_validation_middleware,
+// 	message_listen_middleware,
+// );
 
 // get message attachments
 router.get(
@@ -77,10 +77,10 @@ router.delete(
 
 router.get("/api/chats", auth_validation_middleware, chats_get_middleware);
 
-router.get(
-	"/api/chats/listen",
-	auth_validation_middleware,
-	chat_listen_middleware,
-);
-
+// router.get(
+// 	"/api/chats/listen",
+// 	auth_validation_middleware,
+// 	chat_listen_middleware,
+// );
+//
 export default router;

@@ -30,8 +30,10 @@ export function auth_validation_middleware(req: Request, resp: Response, next: N
 
 	}catch(err: any){
 		console.log(err.message);
-		if(err instanceof JsonWebTokenError)
-			return resp.sendStatus(401);
+		if(err instanceof JsonWebTokenError && err.message.toLowerCase().includes("expired"))
+			return resp.sendStatus(601); // expired
+		else if(err instanceof JsonWebTokenError)
+			return resp.sendStatus(401); // invalid token
 		return resp.sendStatus(500);
 	}
 }

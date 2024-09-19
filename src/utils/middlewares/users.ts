@@ -15,9 +15,7 @@ export async function users_get_middleware(req: Request, resp: Response, next: N
 		).map((u: IUser) => {
 			return {...u, password: undefined}
 		});
-		return resp.status(200).send({
-			users: users
-		});
+		return resp.status(200).send(users);
 	}catch(err: any){
 		console.log(err.message);
 		return resp.sendStatus(500);

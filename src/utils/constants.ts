@@ -9,7 +9,7 @@ id), path text NOT NULL, filename text NOT NULL, date bigint NOT NULL)`;
 export const USERNAME_VALIDATION_REGEX = `^(?=[a-zA-Z0-9._]{4,20}$)(?!.*[_.]{2})[^_.].*[^_.]$`;
 
 export const EVENT_EMITTER = new EventEmitter2({
-	wildcard: false,
+	wildcard: true,
 	verboseMemoryLeak: true,
 });
 

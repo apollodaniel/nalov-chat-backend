@@ -17,7 +17,7 @@ export function static_files_middleware(req: Request, resp: Response, next: Next
 	const user_id = new Auth({token: Auth.verify_auth_token(req.auth!)}).user_id;
 
 	try{
-		if(splitted_path.length >= 3 && splitted_path[3].trim().split("_").find((a) => a === user_id)){
+		if(splitted_path.length >= 3 && splitted_path[3].includes(user_id)){
 			// user has the permission of that chat
 			return next();
 		}

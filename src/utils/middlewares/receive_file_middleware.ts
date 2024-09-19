@@ -166,16 +166,17 @@ export async function receive_file_middleware(
             );
 
             if (
-                ocurrences > 1 &&
-                buffer.slice(boundary_end, buffer.byteLength).byteLength === 0
+                ocurrences > 1
+				// buffer.slice(boundary_end, buffer.byteLength).byteLength === 0
             ) {
                 // one chunk only
                 console.log("One chunk only");
 
                 const content = buffer.slice(
                     headers_end_index,
-                    boundary_end + matched_boundary.length + 4,
+                    buffer.slice(0, buffer.lastIndexOf(Buffer.from("\r"))).lastIndexOf(Buffer.from("\r")),
                 );
+
                 attachments[0].fileStream.write(content);
                 progress += Number(content.byteLength);
                 overallProgress += Number(content.byteLength);

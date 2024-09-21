@@ -106,6 +106,7 @@ export async function message_put_middleware(
     try {
         const message = new Message({
             ...req.body,
+            attachments: [], // get empty attachments to not conflict
             sender_id: user_id.user_id,
         });
 
@@ -116,7 +117,6 @@ export async function message_put_middleware(
 
                 const id = v4();
                 message.attachments = [
-                    ...(message.attachments || []),
                     new Attachment({
                         ...attachment,
                         id: id,
@@ -124,6 +124,7 @@ export async function message_put_middleware(
                         date: Date.now(),
                         path: `files/chats/${get_users_chat_id(message.receiver_id, user_id.user_id)}/${message.id}/${id}${(file_extension && file_extension[0]) || ""}`,
                     }),
+                    ...(message.attachments),
                 ];
             }
         }
@@ -132,6 +133,7 @@ export async function message_put_middleware(
         if (message.creation_date != message.last_modified_date)
             message.last_modified_date = message.creation_date;
 
+		console.log(message);
         await create_message(message);
         EVENT_EMITTER.emit(`update-${get_users_chat_id(message.receiver_id, user_id.user_id)}`);
 

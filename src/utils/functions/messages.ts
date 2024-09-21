@@ -147,7 +147,7 @@ export async function update_attachment_mimetype(
 
 export async function create_message(message: Message) {
 	const db = ChatAppDatabase.getInstance();
-	if (message.attachments) {
+	if (message.attachments.length > 0) {
 		await db.exec_db(new Message({ ...message }).toInsert());
 		await db.exec_db(
 			parse_attachments_to_insert(

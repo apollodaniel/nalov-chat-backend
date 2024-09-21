@@ -47,7 +47,7 @@ export class ChatAppDatabase {
 		return this.db;
 	}
 
-	async query_db(query: string): Promise<QueryResult<IMessage | IUser>> {
+	async query_db(query: string): Promise<QueryResult<any>> {
 		const db = await this.initDB();
 		return await db.query(query);
 	}

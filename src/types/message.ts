@@ -33,7 +33,7 @@ export class Message {
 	seen_date: number | null;
 
 	// internal acess only
-	attachments?: Attachment[];
+	attachments: Attachment[];
 
 	constructor(obj: IMessage) {
 		if (obj.id) this.id = obj.id;
@@ -44,6 +44,7 @@ export class Message {
 		this.sender_id = obj.sender_id;
 		this.receiver_id = obj.receiver_id;
 		this.seen_date = obj.seen_date;
+		this.attachments = obj.attachments || [];
 	}
 
 	toInsert(): string {

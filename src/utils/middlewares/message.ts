@@ -88,13 +88,6 @@ export async function message_get_single_middleware(
     }
 }
 
-function receive_file_listener(message: Message, user_id: string) {
-    // if sucess clear delete message timeout
-    // clearTimeout(timeout_id);
-    EVENT_EMITTER.removeAllListeners(`*${message.id}*`);
-    EVENT_EMITTER.emit(`update-${message.receiver_id}`, user_id);
-}
-
 export async function message_put_middleware(
     req: Request,
     resp: Response,
@@ -137,16 +130,6 @@ export async function message_put_middleware(
         await create_message(message);
         EVENT_EMITTER.emit(`update-${get_users_chat_id(message.receiver_id, user_id.user_id)}`);
 
-        if (message.attachments && message.attachments.length > 0) {
-            // temporary solution to attachment.id - need to listen to all events of changed file, a generic event with message id
-            // and the attachment id being the parameter
-            EVENT_EMITTER.on(
-                `received-file-${message.attachments![0].id}`,
-                () => receive_file_listener(message, user_id.user_id),
-            );
-            return resp.send({ message_id: message.id });
-        }
-
         return resp.send({ message_id: message.id });
     } catch (err: any) {
         console.log(err.message);
@@ -169,7 +152,7 @@ export async function message_patch_middleware(
         if (!(await check_message_permission(auth_obj.user_id, message_id)))
             return resp.sendStatus(401); // user that requested the resource is not allowed to read it
         await patch_message({ id: message_id, ...req.body });
-        EVENT_EMITTER.emit(`update-${message.receiver_id}`, [auth_obj.user_id]);
+        EVENT_EMITTER.emit(`update-${get_users_chat_id(message.receiver_id, message.sender_id)}`);
         return resp.sendStatus(200);
     } catch (err: any) {
         console.log(err.message);
@@ -194,8 +177,7 @@ export async function message_delete_middleware(
 
     try {
         await delete_message(message_id);
-        EVENT_EMITTER.emit(`update-${message.receiver_id}`, [user_id.user_id]);
-        EVENT_EMITTER.removeAllListeners(`*${message_id}*`);
+        EVENT_EMITTER.emit(`update-${get_users_chat_id(message.receiver_id, user_id.user_id)}`);
         return resp.sendStatus(200);
     } catch (err: any) {
         console.log(err.message);

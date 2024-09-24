@@ -196,7 +196,7 @@ export async function receive_file_middleware(
 				overallProgress += Number(content.byteLength);
 
 				attachments[0].fileStream.close();
-				// EVENT_EMITTER.emit(`received-file-${attachments[0].id}`); // temporary solution for single file attachment send
+				EVENT_EMITTER.emit(`update-${get_users_chat_id(message.receiver_id, message.sender_id)}`); // temporary solution for single file attachment send
 				// setTimeout(
 				// 	() =>
 				// 		EVENT_EMITTER.emit(
@@ -249,7 +249,7 @@ export async function receive_file_middleware(
 				progress += Number(previous_content.byteLength);
 				overallProgress += Number(previous_content.byteLength);
 
-				// EVENT_EMITTER.emit(`received-file-${attachments[0].id}`); // temporary solution for single file attachment send
+				EVENT_EMITTER.emit(`update-${get_users_chat_id(message.receiver_id, message.sender_id)}`); // temporary solution for single file attachment send
 				// setTimeout(
 				// 	() =>
 				// 		EVENT_EMITTER.emit(

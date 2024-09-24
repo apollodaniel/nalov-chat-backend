@@ -6,8 +6,8 @@ import { receive_file_middleware } from "../utils/middlewares/receive_file_middl
 
 const router = express.Router();
 
-router.use("/files", auth_validation_middleware);
-router.use("/files", static_files_middleware);
+// router.use("/files", auth_validation_middleware);
+// router.use("/files", static_files_middleware);
 router.use("/files", express.static('files/'));
 router.use("/public/profile-pictures", express.static('public/profile-picture'));
 

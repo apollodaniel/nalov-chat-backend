@@ -84,7 +84,7 @@ export async function receive_file_middleware(
     // );
     //
     let actual_file_header = Buffer.alloc(0);
-	let actual_file_mime_type = attachments[0].mime_type;
+    let actual_file_mime_type = attachments[0].mime_type;
 
     req.on("data", (data: Uint8Array) => {
         let buffer = Buffer.from(data);
@@ -168,7 +168,7 @@ export async function receive_file_middleware(
                         mime_type,
                     ),
                 );
-				actual_file_mime_type = mime_type;
+                actual_file_mime_type = mime_type;
             }
 
             attachments = attachments.sort((at) =>
@@ -204,15 +204,24 @@ export async function receive_file_middleware(
 
                 attachments[0].fileStream.close();
                 if (actual_file_mime_type === "application/pdf") {
-                    generate_file_preview(attachments[0], () => {
+                    Promise.all([
+                        new Promise<void>((r) =>
+                            generate_file_preview(attachments[0], () => r()),
+                        ),
+                        new Promise<void>((r) =>
+                            attachments[0].fileStream.on("close", r),
+                        ),
+                    ]).then(() => {
                         EVENT_EMITTER.emit(
                             `update-${get_users_chat_id(message.receiver_id, message.sender_id)}`,
-                        ); // temporary solution for single file attachment send
+                        );
                     });
                 } else {
-                    EVENT_EMITTER.emit(
-                        `update-${get_users_chat_id(message.receiver_id, message.sender_id)}`,
-                    ); // temporary solution for single file attachment send
+                    attachments[0].fileStream.on("close", () =>
+                        EVENT_EMITTER.emit(
+                            `update-${get_users_chat_id(message.receiver_id, message.sender_id)}`,
+                        ),
+                    );
                 }
                 next();
             } else if (
@@ -268,17 +277,26 @@ export async function receive_file_middleware(
                 // );
 
                 console.log(`Finished: ${attachments[0].filename}`);
-				console.log(actual_file_mime_type);
+                console.log(actual_file_mime_type);
                 if (actual_file_mime_type === "application/pdf") {
-                    generate_file_preview(attachments[0], () => {
+                    Promise.all([
+                        new Promise<void>((r) =>
+                            generate_file_preview(attachments[0], () => r()),
+                        ),
+                        new Promise<void>((r) =>
+                            attachments[0].fileStream.on("close", r),
+                        ),
+                    ]).then(() => {
                         EVENT_EMITTER.emit(
                             `update-${get_users_chat_id(message.receiver_id, message.sender_id)}`,
-                        ); // temporary solution for single file attachment send
+                        );
                     });
                 } else {
-                    EVENT_EMITTER.emit(
-                        `update-${get_users_chat_id(message.receiver_id, message.sender_id)}`,
-                    ); // temporary solution for single file attachment send
+                    attachments[0].fileStream.on("finish", () => {
+                        EVENT_EMITTER.emit(
+                            `update-${get_users_chat_id(message.receiver_id, message.sender_id)}`,
+                        );
+                    });
                 }
                 let post_content = buffer.slice(
                     previous_content.byteLength,
@@ -306,12 +324,13 @@ export async function receive_file_middleware(
                         .toString("binary")
                         .match(/name=".+?"/);
 
-                    post_content = post_content.slice( headers_end_index,
+                    post_content = post_content.slice(
+                        headers_end_index,
                         post_content.byteLength,
                     );
 
                     // close filestream and remove current attachment from list
-                    attachments[0].fileStream.close();
+                    attachments[0].fileStream.end();
                     attachments = attachments.filter(
                         (a) => attachments[0].id !== a.id,
                     );
@@ -355,7 +374,9 @@ export async function receive_file_middleware(
                         overallProgress += Number(post_content.byteLength);
                     }
                 } else {
-                    // rawFileStream.close();
+                    // rawFileStream.close();close
+                    attachments[0].fileStream.end();
+
                     next();
                 }
             }
@@ -376,18 +397,20 @@ async function generate_file_preview(
     const preview_path = `${attachment.path}.png`;
     try {
         const document = await pdf(attachment.path, {});
-		let preview_page;
+        let preview_page;
 
-		for await (const page of document){
-			preview_page = page;
-			break;
-		}
+        for await (const page of document) {
+            preview_page = page;
+            break;
+        }
 
-		if(!preview_page){
-			callback();
-			return;
-		}
-        await fs.promises.writeFile(preview_path, preview_page, {encoding: "binary"});
+        if (!preview_page) {
+            callback();
+            return;
+        }
+        await fs.promises.writeFile(preview_path, preview_page, {
+            encoding: "binary",
+        });
 
         update_attachment(
             new Attachment({ ...attachment }).toUpdatePreviewPath(preview_path),

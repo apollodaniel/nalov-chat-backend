@@ -68,15 +68,11 @@ export const MESSAGE_PUT_VALIDATION: Schema = {
 	},
 	content: {
 		in: ["body"],
-		notEmpty: {
-			errorMessage: "content must not be empty",
-		},
 		isString: {
 			errorMessage: "content must be a string",
 		},
 		isLength: {
 			options: {
-				min: 1,
 				max: 300,
 			},
 			errorMessage: "content must be between 1-300 char long",

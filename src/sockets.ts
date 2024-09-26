@@ -32,7 +32,7 @@ ws_server.on("connection", function connection(ws, request) {
 				ws.send("receiver id must not be empty");
 				return;
 			}
-			let listener = async () => {
+			let listener = async (args: any) => {
 				// must be receiver id on opt
 				try {
 					const messages = await get_messages(

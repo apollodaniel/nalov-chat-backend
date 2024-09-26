@@ -117,7 +117,6 @@ export async function message_put_middleware(
                         message_id: message.id,
                         date: Date.now(),
                         path: attachment_path,
-						preview_path: `${attachment_path}.png`
                     }),
                     ...(message.attachments),
                 ];

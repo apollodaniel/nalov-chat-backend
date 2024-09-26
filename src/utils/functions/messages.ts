@@ -135,20 +135,18 @@ export async function get_attachments(
 
 	return query.rows;
 }
-export async function update_attachment_mimetype(
-	attachment: IAttachment,
-	mime_type: string,
+export async function update_attachment(
+	query: string
 ) {
 	const db = ChatAppDatabase.getInstance();
-	await db.exec_db(
-		new Attachment(attachment).toUpdateMimeType({ mimeType: mime_type }),
-	);
+	await db.exec_db(query);
 }
 
 export async function create_message(message: Message) {
 	const db = ChatAppDatabase.getInstance();
 	if (message.attachments.length > 0) {
 		await db.exec_db(new Message({ ...message }).toInsert());
+
 		await db.exec_db(
 			parse_attachments_to_insert(
 				message.attachments.map((a) => a.toInsertValues()),

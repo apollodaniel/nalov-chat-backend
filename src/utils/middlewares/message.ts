@@ -109,13 +109,15 @@ export async function message_put_middleware(
                 const file_extension = attachment.filename.match(/\.[^.]+$/);
 
                 const id = v4();
+				const attachment_path = `files/chats/${get_users_chat_id(message.receiver_id, user_id.user_id)}/${message.id}/${id}${(file_extension && file_extension[0]) || ""}`;
                 message.attachments = [
                     new Attachment({
                         ...attachment,
                         id: id,
                         message_id: message.id,
                         date: Date.now(),
-                        path: `files/chats/${get_users_chat_id(message.receiver_id, user_id.user_id)}/${message.id}/${id}${(file_extension && file_extension[0]) || ""}`,
+                        path: attachment_path,
+						preview_path: `${attachment_path}.png`
                     }),
                     ...(message.attachments),
                 ];

@@ -24,6 +24,14 @@ export const error_map = {
 			msg: "this username already exists",
 		},
 	},
+	content_must_not_be_empty: {
+		error_obj: {
+			type: "field error",
+			path: "content",
+			location: "body",
+			msg: "content must not be empty",
+		},
+	},
 	invalid_credentials: {
 		error_msg: "invalid user credentials",
 		error_obj: {

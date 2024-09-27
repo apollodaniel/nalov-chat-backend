@@ -95,7 +95,9 @@ export async function message_put_middleware(
 ) {
     const auth = req.auth!;
     const user_id = new Auth({ token: Auth.verify_auth_token(auth) });
-
+	if((!req.body.content || req.body.content.length === 0) && (!req.body.attachments || req.body.attachments.length === 0)){
+		return resp.status(400).send([error_map.content_must_not_be_empty]);
+	}
     try {
         const message = new Message({
             ...req.body,

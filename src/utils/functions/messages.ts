@@ -12,6 +12,7 @@ import { IUser, User } from "../../types/user";
 import { parse_attachments_to_insert } from "../functions";
 import { error_map } from "../constants";
 import { parse } from "dotenv";
+import fs from "fs";
 
 export async function parse_message(message: IMessage) {
 	const db = ChatAppDatabase.getInstance();
@@ -40,7 +41,9 @@ export async function get_messages(
 	);
 
 	const messages_obj = await Promise.all(
-		messages.map(async (msg) => await parse_message(msg)),
+		messages
+			.filter((msg) => (msg.attachments || []).every((a) => a.date))
+			.map(async (msg) => await parse_message(msg)),
 	);
 
 	console.log(messages_obj[0]);
@@ -135,9 +138,7 @@ export async function get_attachments(
 
 	return query.rows;
 }
-export async function update_attachment(
-	query: string
-) {
+export async function update_attachment(query: string) {
 	const db = ChatAppDatabase.getInstance();
 	await db.exec_db(query);
 }
@@ -163,7 +164,14 @@ export async function patch_message(params: MessageUpdateParams) {
 	await db.exec_db(Message.toUpdate(params));
 }
 
-export async function delete_message(message_id: string) {
+export async function delete_message(user_id: string, message_id: string) {
 	const db = ChatAppDatabase.getInstance();
+	const message = await get_single_message(user_id, message_id);
+	if(message.attachments.length > 0) {
+		const path = message.attachments[0].path;
+		let message_path = path.substring(0, path.lastIndexOf("/"));
+		await fs.promises.rmdir(message_path, {recursive: true});
+	}
 	await db.exec_db(Message.toDelete(message_id));
+
 }

@@ -20,6 +20,10 @@ export async function login_user(auth: Auth) {
 	}
 }
 
+export async function delete_user(user_id: string){
+
+}
+
 export async function logout_user(refresh_token: string){
 	const db = ChatAppDatabase.getInstance();
 	await db.exec_db(`DELETE FROM auth WHERE token = '${refresh_token}'`);

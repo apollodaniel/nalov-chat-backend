@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { IDbType } from './types';
+import { ChatAppDatabase } from '../utils/db';
 
 export type AuthArgs = {token: string, user_id?: string} | {user_id: string, token?: string};
 
@@ -29,9 +30,15 @@ export class Auth implements IDbType{
 		return jwt.sign({refresh_token: this.token }, process.env.JWT_AUTH_TOKEN!, {expiresIn: '30M'});
 	}
 
-	static verify_auth_token(auth_token: string): string {
-		const verified_token = jwt.verify(auth_token, process.env.JWT_AUTH_TOKEN!, {}) as SignedAuthToken;
+	static verify_auth_token(auth_token: string, ignore_expiration?: boolean): string {
+		const verified_token = jwt.verify(auth_token, process.env.JWT_AUTH_TOKEN!, {ignoreExpiration: ignore_expiration || false}) as SignedAuthToken;
 		return verified_token.refresh_token;
+	}
+	static async verify_refresh_token(token: string): Promise<boolean> {
+		jwt.verify(token, process.env.JWT_REFRESH_TOKEN!, {});
+		const db = ChatAppDatabase.getInstance();
+		const result = await db.query_db(`SELECT * FROM auth WHERE token = '${token}'`);
+		return result.rowCount !== 0;
 	}
 
 	toInsert(): string{
@@ -39,6 +46,4 @@ export class Auth implements IDbType{
 	}
 
 	toDelete(): string{
-		return `DELETE FROM auth WHERE token = '${this.token}'`;
-	}
-}
+		return `DELETE FROM auth WHERE token = '${this.token}'`; } }

@@ -8,6 +8,7 @@ import { check_token_middleware, token_middleware } from "../utils/middlewares/t
 import { auth_validation_middleware, validation_middleware } from "../utils/middlewares/validation_middleware";
 import { TokenExpiredError } from "jsonwebtoken";
 import { TOKEN_VALIDATION_SCHEMA } from "../utils/validation_schemas/token_validation";
+import { delete_user_middleware } from "../utils/middlewares/users";
 
 const router = Router();
 
@@ -23,6 +24,12 @@ router.post(
 	checkSchema(LOGIN_VALIDATION_SCHEMA),
 	validation_middleware,
 	login_middleware
+);
+
+router.delete(
+	"/auth/account",
+	auth_validation_middleware,
+	delete_user_middleware
 );
 
 router.get(

@@ -3,6 +3,7 @@ import { USERNAME_VALIDATION_REGEX } from "../constants";
 
 export const LOGIN_VALIDATION_SCHEMA: Schema = {
 	username: {
+		in: ["body"],
 		notEmpty: {
 			errorMessage: "username must not be empty"
 		},
@@ -12,6 +13,7 @@ export const LOGIN_VALIDATION_SCHEMA: Schema = {
 		}
 	},
 	password: {
+		in: ["body"],
 		notEmpty: {
 			errorMessage: "password must not be empty"
 		},

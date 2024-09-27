@@ -77,3 +77,14 @@ export async function users_patch_single_middleware(req: Request, resp: Response
 		return resp.sendStatus(500);
 	}
 }
+
+
+
+
+export async function delete_user_middleware(
+	req: Request,
+	resp: Response,
+	next: NextFunction,
+) {
+
+}

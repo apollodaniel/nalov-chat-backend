@@ -77,7 +77,7 @@ export interface IAttachment {
 	path: string;
 	preview_path?: string;
 	byte_length: number;
-	date: number;
+	date?: number;
 }
 
 export class Attachment {
@@ -87,7 +87,7 @@ export class Attachment {
 	mime_type: string;
 	path: string;
 	byte_length: number;
-	date: number;
+	date?: number;
 	preview_path?: string;
 
 	constructor(obj: IAttachment) {
@@ -103,12 +103,12 @@ export class Attachment {
 
 	toInsert(): string {
 		if(this.preview_path)
-			return `INSERT INTO attachments(id, message_id, filename, mime_type, path, preview_path, byte_length, date) values ('${this.id}','${this.message_id}', '${this.filename}', '${this.mime_type}', '${this.path}', '${this.preview_path}', ${this.byte_length}, ${this.date})`;
-		return `INSERT INTO attachments(id, message_id, filename, mime_type, path, byte_length, date) values ('${this.id}','${this.message_id}', '${this.filename}', '${this.mime_type}', '${this.path}', ${this.byte_length}, ${this.date})`;
+			return `INSERT INTO attachments(id, message_id, filename, mime_type, path, preview_path, byte_length) values ('${this.id}','${this.message_id}', '${this.filename}', '${this.mime_type}', '${this.path}', '${this.preview_path}', ${this.byte_length}, ${this.date})`;
+		return `INSERT INTO attachments(id, message_id, filename, mime_type, path, byte_length) values ('${this.id}','${this.message_id}', '${this.filename}', '${this.mime_type}', '${this.path}', ${this.byte_length}, ${this.date})`;
 	}
 
 	toInsertValues(): string {
-		return `('${this.id}','${this.message_id}', '${this.filename}', '${this.mime_type}', '${this.path}', ${this.preview_path ? `'${this.preview_path}', ` :  ''} ${this.byte_length}, ${this.date})`;
+		return `('${this.id}','${this.message_id}', '${this.filename}', '${this.mime_type}', '${this.path}', ${this.preview_path ? `'${this.preview_path}', ` :  ''} ${this.byte_length})`;
 	}
 
 	toUpdateMimeType(mimeType: string): string{
@@ -116,6 +116,9 @@ export class Attachment {
 	}
 	toUpdatePreviewPath(preview_path: string): string{
 		return `UPDATE attachments SET preview_path = '${preview_path}' WHERE id = '${this.id}'`;
+	}
+	toUpdateDate(date: number): string{
+		return `UPDATE attachments SET date = ${date} WHERE id = '${this.id}'`;
 	}
 
 	static toDelete(id: string): string {

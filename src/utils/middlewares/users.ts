@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { get_single_user, get_users } from "../functions/users";
+import { delete_user, get_single_user, get_users } from "../functions/users";
 import { IUser, User } from "../../types/user";
 import { Auth } from "../../types/auth";
 import { JsonWebTokenError } from "jsonwebtoken";
@@ -86,5 +86,14 @@ export async function delete_user_middleware(
 	resp: Response,
 	next: NextFunction,
 ) {
+	const auth_token = req.auth;
+	const auth = new Auth({token: Auth.verify_auth_token(auth_token)});
 
+	try{
+		await delete_user(auth.user_id);
+		return resp.sendStatus(200);
+	}catch (err:any){
+		console.log(err.message);
+		return resp.sendStatus(500);
+	}
 }

@@ -68,7 +68,7 @@ export async function get_chats(user_id: string): Promise<IChat[]> {
 		);
 
 		// get last message
-		const message = await db.query(
+		const messages = await db.query(
 			`SELECT * FROM messages WHERE id = '${chat.id}'`,
 		);
 
@@ -78,10 +78,15 @@ export async function get_chats(user_id: string): Promise<IChat[]> {
 		);
 
 		const chat_user = new User(user.rows[0]);
-		if ((user.rowCount || 0) != 0 && (message.rowCount || 0) != 0) {
+		if ((user.rowCount || 0) != 0 && (messages.rowCount || 0) != 0) {
+			const attachments = await get_attachments(messages.rows[0].id);
+			const message = {
+				...(messages.rows[0] as IMessage),
+				attachments: attachments,
+			};
 			chats_parsed.push({
 				user: { ...chat_user },
-				last_message: message.rows[0],
+				last_message: message,
 				unseen_message_count:
 					(unseen_count.rowCount === 0 && 0) ||
 					unseen_count.rows[0]["count"],
@@ -130,11 +135,6 @@ export async function get_attachments(
 	const query: QueryResult<IAttachment> = await db.query(
 		`SELECT * FROM attachments WHERE message_id = '${message_id}'`,
 	);
-	if (query.rowCount === 0)
-		throw Error(
-			"unknown attachment " +
-			`SELECT * FROM attachments WHERE message_id = '${message_id}'`,
-		);
 
 	return query.rows;
 }
@@ -167,11 +167,10 @@ export async function patch_message(params: MessageUpdateParams) {
 export async function delete_message(user_id: string, message_id: string) {
 	const db = ChatAppDatabase.getInstance();
 	const message = await get_single_message(user_id, message_id);
-	if(message.attachments.length > 0) {
+	if (message.attachments.length > 0) {
 		const path = message.attachments[0].path;
 		let message_path = path.substring(0, path.lastIndexOf("/"));
-		await fs.promises.rmdir(message_path, {recursive: true});
+		await fs.promises.rmdir(message_path, { recursive: true });
 	}
 	await db.exec_db(Message.toDelete(message_id));
-
 }

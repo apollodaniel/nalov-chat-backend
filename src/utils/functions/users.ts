@@ -4,6 +4,8 @@ import { IUser, User } from "../../types/user";
 import { error_map } from "../constants";
 import { ChatAppDatabase } from "../db";
 import jwt from "jsonwebtoken";
+import {glob} from "glob";
+import fs from "fs";
 
 export async function register_user(user: User) {
 	const db = ChatAppDatabase.getInstance();
@@ -21,7 +23,17 @@ export async function login_user(auth: Auth) {
 }
 
 export async function delete_user(user_id: string){
+	const iterator = glob.iterate(`./files/chats/*${user_id}*`);
+	for await(const entry of iterator){
+		try{
+			await fs.promises.rm(entry, {recursive: true, maxRetries: 3, retryDelay: 100, force: true});
+		} finally {
+			console.log("Deleted entry " + entry);
+		}
+	}
 
+	const db = ChatAppDatabase.getInstance();
+	await db.exec_db(User.toDelete(user_id));
 }
 
 export async function logout_user(refresh_token: string){

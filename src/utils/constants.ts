@@ -1,8 +1,8 @@
 import { EventEmitter2 } from "eventemitter2";
 
 export const CREATE_USER_TABLE = `CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY NOT NULL, username TEXT NOT NULL UNIQUE, name TEXT NOT NULL, password TEXT NOT NULL, profile_picture TEXT)`;
-export const CREATE_MESSAGE_TABLE = `CREATE TABLE IF NOT EXISTS messages(id TEXT PRIMARY KEY NOT NULL, content TEXT NOT NULL, creation_date BIGINT NOT NULL, last_modified_date BIGINT NOT NULL, seen_date BIGINT, sender_id TEXT NOT NULL REFERENCES users(id), receiver_id TEXT NOT NULL REFERENCES users(id))`;
-export const CREATE_AUTH_TABLE = `CREATE TABLE IF NOT EXISTS auth(token TEXT PRIMARY KEY NOT NULL, user_id TEXT NOT NULL REFERENCES users(id))`;
+export const CREATE_MESSAGE_TABLE = `CREATE TABLE IF NOT EXISTS messages(id TEXT PRIMARY KEY NOT NULL, content TEXT NOT NULL, creation_date BIGINT NOT NULL, last_modified_date BIGINT NOT NULL, seen_date BIGINT, sender_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE, receiver_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE)`;
+export const CREATE_AUTH_TABLE = `CREATE TABLE IF NOT EXISTS auth(token TEXT PRIMARY KEY NOT NULL, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE)`;
 export const CREATE_ATTACHMENTS_TABLE = `CREATE TABLE IF NOT EXISTS attachments (id text NOT NULL, message_id TEXT NOT NULL REFERENCES messages(
 id), path text NOT NULL, preview_path TEXT,  filename text NOT NULL, date bigint)`;
 

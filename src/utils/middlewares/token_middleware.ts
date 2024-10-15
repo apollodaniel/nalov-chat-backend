@@ -1,6 +1,7 @@
 import { NextFunction, Request, Response } from 'express';
 import { Auth } from '../../types/auth';
 import { check_user_token_valid } from '../functions/users';
+import { cookieConfig } from '../constants';
 
 export function token_middleware(
 	req: Request,
@@ -9,12 +10,17 @@ export function token_middleware(
 ) {
 	const ref_token = req.cookies.refreshToken;
 
-	if (!ref_token) return resp.sendStatus(401);
+	if (!ref_token) return resp.sendStatus(602);
 
 	try {
 		const refresh_token_auth = new Auth({ token: ref_token });
 		const auth_token = refresh_token_auth.generate_auth_token();
-		return resp.status(200).send({ auth_token: auth_token });
+		resp.cookie(
+			cookieConfig.authToken.name,
+			auth_token,
+			cookieConfig.authToken.options,
+		);
+		return resp.status(200).send({ token: auth_token });
 	} catch (err: any) {
 		console.log(err.message);
 		if (err.message === 'invalid token' || err.message === 'jwt_malformed')
@@ -28,6 +34,12 @@ export async function check_token_middleware(
 	resp: Response,
 	next: NextFunction,
 ) {
-	let valid = await check_user_token_valid(req.body.token, req.body.type);
-	return resp.send({ valid: valid });
+	const auth_token = req.cookies.authToken;
+	const refresh_token = req.cookies.refreshToken;
+
+	console.log(req.cookies);
+	if (!refresh_token) return resp.sendStatus(602);
+	if (!auth_token) return resp.sendStatus(601);
+
+	return resp.send({ valid: true });
 }

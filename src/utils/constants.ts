@@ -61,3 +61,24 @@ export const error_map = {
 	},
 	// Additional errors can be added here
 };
+
+export const cookieConfig = {
+	refreshToken: {
+		name: 'refreshToken',
+		options: {
+			//path: '/', // For production, use '/auth/api/refresh-tokens'. We use '/' for localhost in order to work on Chrome.
+			httpOnly: true,
+			expirate: 30 * 24 * 60 * 60 * 1000, // 30 days of duration
+			//sameSite: 'none' as 'none',
+		},
+	},
+	authToken: {
+		name: 'authToken',
+		options: {
+			expirate: 30 * 60 * 1000,
+			//path: '/', // For production, use '/auth/api/refresh-tokens'. We use '/' for localhost in order to work on Chrome.
+			httpOnly: true,
+			//sameSite: 'none' as 'none',
+		},
+	},
+};

@@ -7,7 +7,7 @@ import {
 } from '../functions/users';
 import { Auth } from '../../types/auth';
 import { ChatAppDatabase } from '../db';
-import { error_map } from '../constants';
+import { cookieConfig, error_map } from '../constants';
 import { JsonWebTokenError } from 'jsonwebtoken';
 
 export async function login_middleware(
@@ -24,11 +24,11 @@ export async function login_middleware(
 		const auth = new Auth({ user_id: id });
 		await login_user(auth);
 
-		resp.cookie('refreshToken', auth.token, {
-			httpOnly: true,
-			sameSite: 'strict',
-			path: '/auth/token',
-		});
+		resp.cookie(
+			cookieConfig.refreshToken.name,
+			auth.token,
+			cookieConfig.refreshToken.options,
+		);
 		return resp.status(200).send({
 			auth_token: auth.generate_auth_token(),
 		});
@@ -46,11 +46,10 @@ export async function logout_middleware(
 	try {
 		const refresh_token = Auth.verify_auth_token(req.auth);
 		await logout_user(refresh_token);
-		resp.clearCookie('refreshToken', {
-			httpOnly: true,
-			sameSite: 'strict',
-			path: '/auth/token',
-		});
+		resp.clearCookie(
+			cookieConfig.refreshToken.name,
+			cookieConfig.refreshToken.options,
+		);
 		return resp.sendStatus(200);
 	} catch (err: any) {
 		console.log(err.message);

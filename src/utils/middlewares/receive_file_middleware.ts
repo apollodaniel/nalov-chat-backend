@@ -1,22 +1,22 @@
-import fs from "fs";
-import { NextFunction, Request, Response } from "express";
-import { Auth } from "../../types/auth";
+import fs from 'fs';
+import { NextFunction, Request, Response } from 'express';
+import { Auth } from '../../types/auth';
 import {
 	get_attachments,
 	get_messages,
 	get_single_message,
 	update_attachment,
-} from "../functions/messages";
-import { EVENT_EMITTER } from "../constants";
+} from '../functions/messages';
+import { EVENT_EMITTER } from '../constants';
 import {
 	Attachment,
 	IAttachment,
 	IMessage,
 	Message,
-} from "../../types/message";
-import { get_users_chat_id } from "../functions";
-import { pdf } from "pdf-to-img";
-import { header, matchedData } from "express-validator";
+} from '../../types/message';
+import { get_users_chat_id } from '../functions';
+import { pdf } from 'pdf-to-img';
+import { header, matchedData } from 'express-validator';
 
 interface WritableAttachment extends IAttachment {
 	fileStream: fs.WriteStream;
@@ -27,28 +27,28 @@ function parseMiddleFileChunk(
 ) {
 	const headerEndIndex = getChunkHeaderEndIndex(buffer);
 	if (headerEndIndex === -1)
-		throw new Error("could not get header end index");
+		throw new Error('could not get header end index');
 
 	const fileHeader = buffer
 		.slice(0, headerEndIndex)
-		.toString("binary")
+		.toString('binary')
 		.trim(); // + 4 bytes from \r\n
 
 	const fileNameMatch = fileHeader.match(/name=".+";/);
 
 	if (!fileNameMatch || fileNameMatch.length === 0)
-		throw new Error("expected filename field on form data");
+		throw new Error('expected filename field on form data');
 
-	const filename = fileNameMatch[0].replace('name="', "").replace('";', "");
+	const filename = fileNameMatch[0].replace('name="', '').replace('";', '');
 
 	const contentTypeMatch = fileHeader.match(/Content-Type:.+/);
 
 	if (!contentTypeMatch || contentTypeMatch.length === 0)
-		throw new Error("expected content type field on form data");
+		throw new Error('expected content type field on form data');
 	const content_type = contentTypeMatch[0]
-		.replace("Content-Type: ", "")
-		.replace("\r", "")
-		.replace("\n", "")
+		.replace('Content-Type: ', '')
+		.replace('\r', '')
+		.replace('\n', '')
 		.trim();
 
 	const fileContent = buffer.slice(headerEndIndex, buffer.byteLength);
@@ -57,14 +57,14 @@ function parseMiddleFileChunk(
 	if (!attachment) throw new Error(`no matches for filename '${filename}'`);
 	attachment.fileStream.write(fileContent);
 	if (
-		content_type !== "application/octet-stream" &&
-		content_type !== "text/plain"
+		content_type !== 'application/octet-stream' &&
+		content_type !== 'text/plain'
 	) {
 		update_attachment(
 			new Attachment({ ...attachment }).toUpdateMimeType(content_type),
 		);
-		if (content_type === "application/pdf")
-			attachment.fileStream.on("finish", () =>
+		if (content_type === 'application/pdf')
+			attachment.fileStream.on('finish', () =>
 				generate_file_preview(attachment, () => {
 					console.log(`Generated pdf preview to ${attachment.id}`);
 				}),
@@ -80,28 +80,28 @@ function parseFileChunk(
 ) {
 	const headerEndIndex = getChunkHeaderEndIndex(buffer);
 	if (headerEndIndex === -1)
-		throw new Error("could not get header end index");
+		throw new Error('could not get header end index');
 
 	const fileHeader = buffer
 		.slice(matched_boundaries[0].length, headerEndIndex)
-		.toString("binary")
+		.toString('binary')
 		.trim(); // + 4 bytes from \r\n
 
 	const fileNameMatch = fileHeader.match(/name=".+";/);
 
 	if (!fileNameMatch || fileNameMatch.length === 0)
-		throw new Error("expected filename field on form data");
+		throw new Error('expected filename field on form data');
 
-	const filename = fileNameMatch[0].replace('name="', "").replace('";', "");
+	const filename = fileNameMatch[0].replace('name="', '').replace('";', '');
 
 	const contentTypeMatch = fileHeader.match(/Content-Type:.+/);
 
 	if (!contentTypeMatch || contentTypeMatch.length === 0)
-		throw new Error("expected content type field on form data");
+		throw new Error('expected content type field on form data');
 	const content_type = contentTypeMatch[0]
-		.replace("Content-Type: ", "")
-		.replace("\r", "")
-		.replace("\n", "")
+		.replace('Content-Type: ', '')
+		.replace('\r', '')
+		.replace('\n', '')
 		.trim();
 
 	const fileContent = buffer.slice(
@@ -117,10 +117,10 @@ function parseFileChunk(
 	attachment.fileStream.write(fileContent);
 
 	if (
-		content_type !== "application/octet-stream" &&
-		content_type !== "text/plain"
+		content_type !== 'application/octet-stream' &&
+		content_type !== 'text/plain'
 	) {
-		if (content_type === "application/pdf")
+		if (content_type === 'application/pdf')
 			generate_file_preview(attachment, () => {
 				console.log(`Generated pdf preview to ${attachment.id}`);
 			});
@@ -131,8 +131,8 @@ function parseFileChunk(
 
 	return filename;
 }
-function getChunkHeaderEndIndex(buffer: Buffer): number {
-	const buffer_str = buffer.toString("binary");
+export function getChunkHeaderEndIndex(buffer: Buffer): number {
+	const buffer_str = buffer.toString('binary');
 	const content_type_match = buffer_str.match(/Content-Type:.+/);
 
 	if (!content_type_match || content_type_match.length === 0) return -1;
@@ -147,31 +147,31 @@ function updateMimeTypeAndGeneratePreview(
 	attachment: WritableAttachment,
 	message: IMessage,
 ) {
-	const buffer_str = buffer.toString("binary");
+	const buffer_str = buffer.toString('binary');
 	const content_type_match = buffer_str.match(/Content-Type:.+/);
 
 	if (!content_type_match) {
-		console.log("Could not find mime type");
+		console.log('Could not find mime type');
 		return;
 	}
 
 	let mime_type = content_type_match[0]
-		.replace("Content-Type: ", "")
-		.replace("\r", "")
-		.replace("\n", "");
+		.replace('Content-Type: ', '')
+		.replace('\r', '')
+		.replace('\n', '');
 
-	if (mime_type === "text/plain" || mime_type === "application/octet-stream")
+	if (mime_type === 'text/plain' || mime_type === 'application/octet-stream')
 		return; // ignore these mimetypes
-	else if (mime_type === "application/pdf") {
+	else if (mime_type === 'application/pdf') {
 		// waits file be written to get his preview
-		attachment.fileStream.on("finish", () =>
+		attachment.fileStream.on('finish', () =>
 			generate_file_preview(attachment, () =>
 				notify_received_attachment(message, attachment),
 			),
 		);
 	} else {
 		// adds notify received attachment as callback to filestream on finish
-		attachment.fileStream.on("finish", () =>
+		attachment.fileStream.on('finish', () =>
 			notify_received_attachment(message, attachment),
 		);
 	}
@@ -190,14 +190,14 @@ function parseChunk(
 	boundaryCount: number,
 ): WritableAttachment[] {
 	console.log(attachmentStack[0].filename);
-	const file_boundary = headers["content-type"]
-		.split(";")[1]
-		.replace("boundary=", "")
+	const file_boundary = headers['content-type']
+		.split(';')[1]
+		.replace('boundary=', '')
 		.trim();
 
-	const buffer_str = buffer.toString("binary");
+	const buffer_str = buffer.toString('binary');
 	let matched_boundaries_obj = Array.from(
-		buffer_str.matchAll(new RegExp(`-*${file_boundary}-*`, "g")),
+		buffer_str.matchAll(new RegExp(`-*${file_boundary}-*`, 'g')),
 	);
 
 	const matched_boundaries = matched_boundaries_obj.map((match) => match[0]);
@@ -217,7 +217,7 @@ function parseChunk(
 	// use a external function for this
 	const firstBoundaryPrevContent = buffer
 		.slice(0, boundaryOcurrences[0] || 0)
-		.toString("binary");
+		.toString('binary');
 	if (matchingOcurrence && firstBoundaryPrevContent.length === 0) {
 		// ocurrs only when file starts right on the start of the chunk (first file usually)
 		// or when it got recursivly here
@@ -311,9 +311,9 @@ function parseChunk(
 					Buffer.from(matched_boundaries[0]).byteLength,
 				buffer.byteLength,
 			)
-			.toString("binary")
-			.replace("\r", "")
-			.replace("\n", "")
+			.toString('binary')
+			.replace('\r', '')
+			.replace('\n', '')
 			.trim();
 		console.log(`${sortedAttachmentStack[0].id} ending`);
 		sortedAttachmentStack[0].fileStream.write(endingContent);
@@ -342,8 +342,8 @@ export async function receive_file_middleware(
 	next: NextFunction,
 ) {
 	if (
-		!req.headers["content-type"] ||
-		!req.headers["content-type"]?.startsWith("multipart/form-data")
+		!req.headers['content-type'] ||
+		!req.headers['content-type']?.startsWith('multipart/form-data')
 	)
 		return resp.sendStatus(400);
 
@@ -360,8 +360,8 @@ export async function receive_file_middleware(
 		await get_attachments(message_id)
 	).map((a: IAttachment) => {
 		const stream = fs.createWriteStream(a.path, {
-			encoding: "binary",
-			flags: "a",
+			encoding: 'binary',
+			flags: 'a',
 		});
 		return {
 			...a,
@@ -372,32 +372,32 @@ export async function receive_file_middleware(
 	if (attachments.length === 0) return resp.sendStatus(400);
 
 	// create message directory
-	let splitted_path = attachments[0].path.split("/");
+	let splitted_path = attachments[0].path.split('/');
 	splitted_path = splitted_path.filter(
 		(_v, _index) => _index != splitted_path.length - 1,
 	);
 
-	const dir_path = splitted_path.join("/");
+	const dir_path = splitted_path.join('/');
 	if (!fs.existsSync(dir_path)) fs.mkdirSync(dir_path, { recursive: true });
 
 	// raw file stream
 	let rawFileStream: fs.WriteStream = fs.createWriteStream(
 		`${dir_path}/raw_request.raw`,
 		{
-			flags: "a",
-			encoding: "binary",
+			flags: 'a',
+			encoding: 'binary',
 		},
 	);
 
 	let boundaryCount = 0;
 	let attachmentStack = [...attachments];
-	req.on("data", (data: Uint8Array) => {
+	req.on('data', (data: Uint8Array) => {
 		let buffer = Buffer.from(data);
 		// rawFileStream.write(buffer);
 		// rawFileStream.write(Buffer.from("DIVISAO DE CHUNK"));
 
 		if (attachmentStack.length === 0)
-			console.log("Reached end of attachment stack with data to receive");
+			console.log('Reached end of attachment stack with data to receive');
 
 		const attStack = [
 			...parseChunk(
@@ -411,15 +411,15 @@ export async function receive_file_middleware(
 		attachmentStack = attStack;
 	});
 
-	req.on("end", () => {
+	req.on('end', () => {
 		rawFileStream.end();
 		attachments.forEach((a) => a.fileStream.end());
 	});
-	req.on("close", () => {
+	req.on('close', () => {
 		rawFileStream.end();
 		attachments.forEach((a) => a.fileStream.end());
 	});
-	req.on("error", () => {
+	req.on('error', () => {
 		attachments.forEach((a) => a.fileStream.end());
 		rawFileStream.end();
 		return resp.sendStatus(500);
@@ -445,7 +445,7 @@ async function generate_file_preview(
 			return;
 		}
 		await fs.promises.writeFile(preview_path, preview_page, {
-			encoding: "binary",
+			encoding: 'binary',
 		});
 
 		update_attachment(

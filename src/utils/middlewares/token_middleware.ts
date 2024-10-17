@@ -1,7 +1,9 @@
 import { NextFunction, Request, Response } from 'express';
 import { Auth } from '../../types/auth';
-import { check_user_token_valid } from '../functions/users';
+import { check_user_token_valid, logout_user } from '../functions/users';
 import { cookieConfig } from '../constants';
+import { ChatAppDatabase } from '../db';
+import { cookie } from 'express-validator';
 
 export function token_middleware(
 	req: Request,
@@ -37,9 +39,34 @@ export async function check_token_middleware(
 	const auth_token = req.cookies.authToken;
 	const refresh_token = req.cookies.refreshToken;
 
-	console.log(req.cookies);
 	if (!refresh_token) return resp.sendStatus(602);
 	if (!auth_token) return resp.sendStatus(601);
+
+	const auth = new Auth({ token: refresh_token });
+	const db = ChatAppDatabase.getInstance();
+
+	const result = (
+		await db.query_db(
+			`SELECT * FROM users WHERE id = '${auth.user_id}' limit 1`,
+		)
+	).rowCount;
+	if (result === 0) {
+		// user doesn't exists
+		// clear auth tokens
+		// and remove auth registry
+		resp.clearCookie(
+			cookieConfig.refreshToken.name,
+			cookieConfig.refreshToken.options,
+		);
+		resp.clearCookie(
+			cookieConfig.authToken.name,
+			cookieConfig.authToken.options,
+		);
+
+		await logout_user(refresh_token);
+
+		return resp.sendStatus(602);
+	}
 
 	return resp.send({ valid: true });
 }

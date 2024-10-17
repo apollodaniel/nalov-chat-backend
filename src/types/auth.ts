@@ -50,7 +50,7 @@ export class Auth implements IDbType {
 		jwt.verify(token, process.env.JWT_REFRESH_TOKEN!, {});
 		const db = ChatAppDatabase.getInstance();
 		const result = await db.query_db(
-			`SELECT * FROM auth WHERE token = '${token}'`,
+			`SELECT * FROM auth WHERE token = '${token}' limit 1`,
 		);
 		return result.rowCount !== 0;
 	}

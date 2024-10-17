@@ -26,17 +26,21 @@ export async function auth_validation_middleware(
 	if (!result.isEmpty())
 		return resp.status(400).send({ errors: result.array() });
 
-	const auth_token = req.cookies.authToken;
-	if (!auth_token) return resp.sendStatus(601);
+	const authToken = req.cookies.authToken;
+	const refreshToken = req.cookies.refreshToken;
+
+	if (!authToken) return resp.sendStatus(601);
 
 	try {
-		const token_valid = Auth.verify_auth_token(auth_token, true);
+		// gets refresh token without expiration check
+		Auth.verify_auth_token(authToken, true);
 
 		const verified_refresh_token =
-			await Auth.verify_refresh_token(token_valid);
+			await Auth.verify_refresh_token(refreshToken);
 		if (verified_refresh_token) {
-			Auth.verify_auth_token(auth_token);
-			req.auth = auth_token;
+			Auth.verify_auth_token(authToken); // check if is valid considering the expiration
+
+			req.auth = authToken;
 			return next();
 		}
 

@@ -56,11 +56,10 @@ export async function get_users(): Promise<User[]> {
 
 export async function get_single_user(id: string): Promise<User> {
 	const db = ChatAppDatabase.getInstance();
-	const users = (await db.query_db(`SELECT * FROM users WHERE id = '${id}'`))
-		.rows as IUser[];
-	if (users.length === 0) throw Error('not found');
+	const users = await db.query_db(`SELECT * FROM users WHERE id = '${id}'`);
+	if (users.rowCount === 0) throw Error('not found');
 
-	return new User(users[0]);
+	return new User(users.rows[0]);
 }
 
 export async function get_users_with_query({
@@ -83,10 +82,6 @@ export async function get_users_with_query({
 		queries.push(`${_query.field} = ${_query.search}`);
 	}
 
-	console.log(
-		`SELECT * FROM users WHERE id != '${user_id}'${queries.length > 0 ? ' and ' + queries.join(' and ') : ''} ORDER BY name limit ${limit}`,
-	);
-
 	const result = await db.query_db(
 		`SELECT * FROM users WHERE id != '${user_id}'${queries.length > 0 ? ' and ' + queries.join(' and ') : ''} ORDER BY name limit ${limit}`,
 	);
@@ -100,23 +95,23 @@ export async function check_user_credential_valid(
 	const db = ChatAppDatabase.getInstance();
 
 	let result_username = await db.query_db(
-		`SELECT * FROM users WHERE username = '${credentials.username}'`,
+		`SELECT * FROM users WHERE username = '${credentials.username}' limit 1`,
 	);
-
-	let result_pass = await db.query_db(
-		`SELECT * FROM users WHERE password = '${credentials.password}'`,
-	);
-
 	let errors = [];
 
-	if (result_pass.rowCount === 0) {
-		errors.push(error_map.invalid_credentials.error_obj);
-	}
 	if (result_username.rowCount === 0) {
 		errors.push(error_map.username_not_exists.error_obj);
+	} else {
+		let result_pass = await db.query_db(
+			`SELECT * FROM users WHERE password = '${credentials.password}' and username = '${credentials.username}' limit 1`,
+		);
+
+		if (result_pass.rowCount === 0) {
+			errors.push(error_map.invalid_credentials.error_obj);
+		}
 	}
 
-	if (result_username.rowCount != 0 && result_pass.rowCount != 0) {
+	if (errors.length === 0) {
 		return result_username.rows[0].id!;
 	}
 
@@ -137,12 +132,12 @@ export async function check_user_token_valid(
 		const db = await ChatAppDatabase.getInstance().initDB();
 		if (type === 'auth') {
 			const query = await db.query(
-				`SELECT * FROM auth WHERE token = '${result}'`,
+				`SELECT * FROM auth WHERE token = '${result}' limit 1`,
 			);
 			return query.rowCount != 0;
 		} else {
 			const query = await db.query(
-				`SELECT * FROM users WHERE id = '${result}'`,
+				`SELECT * FROM users WHERE id = '${result}' limit 1`,
 			);
 			return query.rowCount != 0;
 		}

@@ -1,18 +1,18 @@
-import { QueryResult } from "pg";
+import { QueryResult } from 'pg';
 import {
 	Attachment,
 	IAttachment,
 	IChat,
 	IMessage,
 	Message,
-} from "../../types/message";
-import { ChatAppDatabase } from "../db";
-import { MessageUpdateParams } from "../../types/types";
-import { IUser, User } from "../../types/user";
-import { parse_attachments_to_insert } from "../functions";
-import { error_map } from "../constants";
-import { parse } from "dotenv";
-import fs from "fs";
+} from '../../types/message';
+import { ChatAppDatabase } from '../db';
+import { MessageUpdateParams } from '../../types/types';
+import { IUser, User } from '../../types/user';
+import { parse_attachments_to_insert } from '../functions';
+import { error_map } from '../constants';
+import { parse } from 'dotenv';
+import fs from 'fs';
 
 export async function parse_message(message: IMessage) {
 	const db = ChatAppDatabase.getInstance();
@@ -89,7 +89,7 @@ export async function get_chats(user_id: string): Promise<IChat[]> {
 				last_message: message,
 				unseen_message_count:
 					(unseen_count.rowCount === 0 && 0) ||
-					unseen_count.rows[0]["count"],
+					unseen_count.rows[0]['count'],
 			});
 		}
 	}
@@ -106,7 +106,7 @@ export async function check_message_permission(
 			`SELECT * FROM messages WHERE id = '${message_id}'`,
 		)) as QueryResult<IMessage>
 	).rows;
-	if (messages.length === 0) throw new Error("message not found");
+	if (messages.length === 0) throw new Error('message not found');
 	return (
 		messages[0].sender_id === user_id || messages[0].receiver_id === user_id
 	);
@@ -169,7 +169,7 @@ export async function delete_message(user_id: string, message_id: string) {
 	const message = await get_single_message(user_id, message_id);
 	if (message.attachments.length > 0) {
 		const path = message.attachments[0].path;
-		let message_path = path.substring(0, path.lastIndexOf("/"));
+		let message_path = path.substring(0, path.lastIndexOf('/'));
 		await fs.promises.rmdir(message_path, { recursive: true });
 	}
 	await db.exec_db(Message.toDelete(message_id));

@@ -19,7 +19,7 @@ export async function login_middleware(
 	try {
 		const id = await check_user_credential_valid(user_credential);
 		if (id.toString() !== id) {
-			return resp.status(400).send({ errors: id });
+			return resp.status(401).send({ errors: id });
 		}
 		const auth = new Auth({ user_id: id });
 		await login_user(auth);
@@ -29,9 +29,7 @@ export async function login_middleware(
 			auth.token,
 			cookieConfig.refreshToken.options,
 		);
-		return resp.status(200).send({
-			auth_token: auth.generate_auth_token(),
-		});
+		return resp.sendStatus(200);
 	} catch (err: any) {
 		console.log(err.message);
 		return resp.sendStatus(500);
@@ -49,6 +47,10 @@ export async function logout_middleware(
 		resp.clearCookie(
 			cookieConfig.refreshToken.name,
 			cookieConfig.refreshToken.options,
+		);
+		resp.clearCookie(
+			cookieConfig.authToken.name,
+			cookieConfig.authToken.options,
 		);
 		return resp.sendStatus(200);
 	} catch (err: any) {

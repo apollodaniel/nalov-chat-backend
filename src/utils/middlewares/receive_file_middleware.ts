@@ -380,15 +380,6 @@ export async function receive_file_middleware(
 	const dir_path = splitted_path.join('/');
 	if (!fs.existsSync(dir_path)) fs.mkdirSync(dir_path, { recursive: true });
 
-	// raw file stream
-	let rawFileStream: fs.WriteStream = fs.createWriteStream(
-		`${dir_path}/raw_request.raw`,
-		{
-			flags: 'a',
-			encoding: 'binary',
-		},
-	);
-
 	let boundaryCount = 0;
 	let attachmentStack = [...attachments];
 	req.on('data', (data: Uint8Array) => {
@@ -412,16 +403,13 @@ export async function receive_file_middleware(
 	});
 
 	req.on('end', () => {
-		rawFileStream.end();
 		attachments.forEach((a) => a.fileStream.end());
 	});
 	req.on('close', () => {
-		rawFileStream.end();
 		attachments.forEach((a) => a.fileStream.end());
 	});
 	req.on('error', () => {
 		attachments.forEach((a) => a.fileStream.end());
-		rawFileStream.end();
 		return resp.sendStatus(500);
 	});
 }

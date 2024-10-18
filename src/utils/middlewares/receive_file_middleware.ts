@@ -15,8 +15,8 @@ import {
 	Message,
 } from '../../types/message';
 import { get_users_chat_id } from '../functions';
-import { pdf } from 'pdf-to-img';
-import { header, matchedData } from 'express-validator';
+
+import pdftopic from 'pdftopic';
 
 interface WritableAttachment extends IAttachment {
 	fileStream: fs.WriteStream;
@@ -415,19 +415,13 @@ async function generate_file_preview(
 ) {
 	const preview_path = `${attachment.path}.png`;
 	try {
-		const document = await pdf(attachment.path, {});
-		let preview_page;
+		const pdf = await fs.promises.readFile(attachment.path);
+		const singlePage = await pdftopic.pdftobuffer(pdf, 0);
 
-		for await (const page of document) {
-			preview_page = page;
-			break;
-		}
-
-		if (!preview_page) {
-			callback();
+		if (!singlePage) {
 			return;
 		}
-		await fs.promises.writeFile(preview_path, preview_page, {
+		await fs.promises.writeFile(preview_path, singlePage, {
 			encoding: 'binary',
 		});
 

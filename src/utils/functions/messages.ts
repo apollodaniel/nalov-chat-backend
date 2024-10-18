@@ -170,7 +170,9 @@ export async function delete_message(user_id: string, message_id: string) {
 	if (message.attachments.length > 0) {
 		const path = message.attachments[0].path;
 		let message_path = path.substring(0, path.lastIndexOf('/'));
-		await fs.promises.rmdir(message_path, { recursive: true });
+		try {
+			await fs.promises.rm(message_path, { recursive: true });
+		} catch {}
 	}
 	await db.exec_db(Message.toDelete(message_id));
 }

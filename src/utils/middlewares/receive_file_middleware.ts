@@ -189,7 +189,6 @@ function parseChunk(
 	message: Message,
 	boundaryCount: number,
 ): WritableAttachment[] {
-	console.log(attachmentStack[0].filename);
 	const file_boundary = headers['content-type']
 		.split(';')[1]
 		.replace('boundary=', '')
@@ -201,7 +200,6 @@ function parseChunk(
 	);
 
 	const matched_boundaries = matched_boundaries_obj.map((match) => match[0]);
-	console.log(matched_boundaries);
 	let boundaryOcurrences: number[] = matched_boundaries_obj.map(
 		(match) => match.index,
 	);
@@ -234,7 +232,6 @@ function parseChunk(
 		// // add remaing attachments for stack
 		// // and put it on sortedAttachmentStack
 		// sortedAttachmentStack = [...tempAttStack, ...(sortedAttachmentStack.filter((sAtt)=>tempAttStack.find((att)=>att.id === sAtt.id)))];
-		console.log(`${sortedAttachmentStack[0].id} start`);
 		if (matchedFilename.length > 1) {
 			// first attachment starts and ends on this chunk, but there's more
 			// files to write.
@@ -293,7 +290,6 @@ function parseChunk(
 		// writing middle of first attachment of stack content
 
 		sortedAttachmentStack[0].fileStream.write(buffer); // write everything because this is raw file content
-		console.log(`${sortedAttachmentStack[0].id} middle`);
 		return sortedAttachmentStack;
 	} else {
 		// first attachment of stack is ending here
@@ -315,7 +311,6 @@ function parseChunk(
 			.replace('\r', '')
 			.replace('\n', '')
 			.trim();
-		console.log(`${sortedAttachmentStack[0].id} ending`);
 		sortedAttachmentStack[0].fileStream.write(endingContent);
 		if (matched_boundaries.length > 1 || postEndContent.length > 0) {
 			// may start and end some other files

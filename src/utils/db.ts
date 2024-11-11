@@ -27,7 +27,7 @@ export class ChatAppDatabase {
 	async initDB(): Promise<pg.Client> {
 		if (!this.db) {
 			this.db = new pg.Client({
-				host: 'db',
+				host: process.env.POSTGRES_HOST,
 				port:
 					(process.env.POSTGRES_PORT &&
 						parseInt(process.env.POSTGRES_PORT)) ||

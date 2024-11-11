@@ -46,7 +46,7 @@ export async function users_get_middleware(
 					...u,
 					profile_picture: u.profile_picture
 						? u.profile_picture
-						: 'public/profile-pictures/default.png',
+						: 'default/profile-pictures/default.png',
 					password: undefined,
 				};
 			});

@@ -4,3 +4,4 @@ public/
 !public/profile-picture/default.png
 .env
 src/**/*.js
+**.norg

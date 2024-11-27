@@ -1,18 +1,11 @@
-import {
-	Entity,
-	PrimaryGeneratedColumn,
-	Column,
-	PrimaryColumn,
-	OneToOne,
-} from 'typeorm';
-import { Auth } from './Auth';
+import { Entity, Column, PrimaryColumn } from 'typeorm';
 
 export interface IUser {
 	id?: string;
 	username: string;
 	name: string;
 	password: string;
-	profile_picture?: string;
+	profilePicture?: string;
 }
 
 @Entity()
@@ -26,5 +19,5 @@ export class User {
 	@Column()
 	password: string;
 	@Column()
-	profile_picture: string = 'default/profile-pictures/default.png';
+	profilePicture: string = 'default/profile-pictures/default.png';
 }

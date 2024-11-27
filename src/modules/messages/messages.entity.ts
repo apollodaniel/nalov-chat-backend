@@ -6,8 +6,8 @@ import {
 	OneToMany,
 	PrimaryGeneratedColumn,
 } from 'typeorm';
-import { User } from './User';
-import { Attachment } from './Attachment';
+import { User } from '../users/users.entity';
+import { Attachment } from '../attachments/attachments.entity';
 
 @Entity()
 export class Message {
@@ -17,24 +17,24 @@ export class Message {
 	@Column()
 	content: string;
 	@Column()
-	creation_date: number;
+	creationDate: number;
 	@Column()
-	last_modified_date: number;
+	lastModifiedDate: number;
 	@Column('uuid')
-	sender_id: string;
+	senderId: string;
 	@Column('uuid')
-	receiver_id: string;
+	receiverId: string;
 	@Column()
-	seen_date: number | null;
+	seenDate: number | null;
 
-	@ManyToOne(() => User, (user) => user.id, { onDelete: 'CASCADE' })
-	@JoinColumn({ name: 'sender_id' })
+	@ManyToOne(() => User, (user: User) => user.id, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'senderId' })
 	sender: User;
 
-	@ManyToOne(() => User, (user) => user.id, { onDelete: 'CASCADE' })
-	@JoinColumn({ name: 'receiver_id' })
+	@ManyToOne(() => User, (user: User) => user.id, { onDelete: 'CASCADE' })
+	@JoinColumn({ name: 'receiverId' })
 	receiver: User;
 
-	@OneToMany(() => Attachment, (att) => att.message)
+	@OneToMany(() => Attachment, (att: Attachment) => att.message)
 	attachments: Attachment[];
 }

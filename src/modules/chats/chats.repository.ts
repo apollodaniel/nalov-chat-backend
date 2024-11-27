@@ -7,7 +7,7 @@ import { MessageRepository } from './Message';
 export class ChatRepository {
 	private messageRepository =
 		AppDataSource.getRepository(Message).extend(MessageRepository);
-	async getRepositories(user: User | string): Promise<IChat[]> {
+	async getChats(user: User | string): Promise<IChat[]> {
 		const user_id = typeof user == 'string' ? user : user.id;
 
 		/*

@@ -1,25 +1,25 @@
 import { Column, JoinColumn, ManyToOne, PrimaryGeneratedColumn } from 'typeorm';
-import { Message } from './Message';
+import { Message } from '../messages/messages.entity';
 
 export class Attachment {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
 	@Column('uuid')
-	message_id: string;
+	messageId: string;
 	@Column();
 	filename: string;
 	@Column();
-	mime_type: string;
+	mimeType: string;
 	@Column();
 	path: string;
 	@Column();
-	preview_path: string;
+	previewPath: string;
 	@Column();
-	byte_length: number;
+	byteLenght: number;
 	@Column('timestamp');
 	date: number;
 
 	@ManyToOne(()=>Message, (message)=>message.id, {onDelete: "CASCADE"})
-	@JoinColumn({name: "message_id"})
+	@JoinColumn({name: "messageId"})
 	message: Message;
 }

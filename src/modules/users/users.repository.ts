@@ -2,7 +2,6 @@ import { EntityRepository, Repository } from 'typeorm';
 import { User } from '../entity/User';
 import { UserCredentials, UserCredentialStatus } from '../types/types';
 
-@EntityRepository(User)
 export class UserRepository extends Repository<User> {
 	async addUser(user: Partial<User>): Promise<void> {
 		await this.save(user);

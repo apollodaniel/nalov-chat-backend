@@ -3,7 +3,6 @@ import { Auth } from '../entity/Auth';
 import { User } from '../entity/User';
 import { JwtHelper } from '../utils/jwtHelper';
 
-@EntityRepository(Auth)
 export class AuthRepository extends Repository<Auth> {
 	async checkAuth(user: string | User): Promise<boolean> {
 		return this.manager.exists(Auth, {
@@ -13,20 +12,29 @@ export class AuthRepository extends Repository<Auth> {
 		});
 	}
 
-	async checkAuthSession(token: string): Promise<boolean> {
-		try {
-			const refreshToken = JwtHelper.verify(token, 'Auth');
+	async getUserID(token: string, type: 'Auth' | 'Refresh'): Promise<string> {
+		if (type == 'Auth') {
+			const refreshToken = JwtHelper.verify(token, type);
+			return JwtHelper.verify(refreshToken, 'Refresh');
+		}
 
-			if (typeof refreshToken != 'string') return false;
+		return JwtHelper.verify(token, type);
+	}
 
-			return this.manager.exists(Auth, {
+	async checkAuthSession(token: string): Promise<string | null> {
+		const refreshToken = JwtHelper.verify(token, 'Auth');
+
+		if (typeof refreshToken != 'string') return null;
+		if (
+			await this.exists({
 				where: {
 					token: refreshToken,
 				},
-			});
-		} catch (err: any) {
-			return false;
+			})
+		) {
+			return JwtHelper.verify(refreshToken, 'Refresh');
 		}
+		return null;
 	}
 
 	async addAuth(user: User) {

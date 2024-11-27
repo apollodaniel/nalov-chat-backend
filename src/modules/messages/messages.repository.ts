@@ -2,7 +2,6 @@ import { EntityRepository, Repository } from 'typeorm';
 import { Message } from '../entity/Message';
 import { parseChatId } from '../utils/functions';
 
-@EntityRepository(Message)
 export class MessageRepository extends Repository<Message> {
 	async getMessages(chatId: string): Promise<Message[]> {
 		const [user1, user2] = parseChatId(chatId);
@@ -19,18 +18,21 @@ export class MessageRepository extends Repository<Message> {
 			.getMany();
 	}
 	async getMessage(messageId: string): Promise<Message | null> {
-		return this.manager.findOne(Message, {
+		return this.findOne({
 			where: {
 				id: messageId,
 			},
 		});
 	}
 	async addMessage(message: Partial<Message>) {
-		await this.manager.save(message);
+		await this.save(message);
+	}
+	async updateMessage(messageId: string, message: Partial<Message>) {
+		await this.update(message, messageId);
 	}
 	async removeMessage(messages: string | string[]) {
 		if (typeof messages == 'string') {
-			await this.manager.remove(messages);
+			await this.remove(messages);
 		} else {
 			await this.createQueryBuilder()
 				.delete()

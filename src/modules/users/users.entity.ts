@@ -16,7 +16,7 @@ export class User {
 	username: string;
 	@Column()
 	name: string;
-	@Column()
+	@Column({ select: false })
 	password: string;
 	@Column()
 	profilePicture: string = 'default/profile-pictures/default.png';

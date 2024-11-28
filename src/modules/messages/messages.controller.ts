@@ -1,7 +1,5 @@
 import { Request, Response } from 'express';
-import { AppDataSource } from '../../data-source';
 import { Message } from './messages.entity';
-import { MessageRepository } from './messages.repository';
 import { getChatId } from '../../utils/functions';
 import { MessageServices } from './messages.services';
 import {
@@ -9,6 +7,7 @@ import {
 	MessageErrorMessages,
 	MessageErrorStatusCodes,
 } from './messages.errors';
+import { EVENT_EMITTER } from '../../utils/constants';
 
 export class MessageController {
 	static async getMessages(req: Request, resp: Response) {
@@ -19,9 +18,9 @@ export class MessageController {
 		return resp.status(200).json(messages);
 	}
 
-	static async getSingle(req: Request, resp: Response) {
+	static async getMessage(req: Request, resp: Response) {
 		try {
-			const message = await MessageServices.getSingle(req.params.id!);
+			const message = await MessageServices.getMessage(req.params.id!);
 			return resp.status(200).send(message);
 		} catch (err: any) {
 			this.sendError(resp, err);
@@ -32,7 +31,13 @@ export class MessageController {
 		const messageId = req.params.id!;
 
 		try {
+			// get's message before delete, so the changes can be notified
+			const message = await MessageServices.getMessage(messageId);
+
 			await MessageServices.removeMessage(messageId, req.userId!);
+
+			// notify the changes
+			await this.notifyMessageChanges(message);
 			return resp.sendStatus(200);
 		} catch (err: any) {
 			this.sendError(resp, err);
@@ -41,6 +46,7 @@ export class MessageController {
 
 	static async addMessage(req: Request, resp: Response) {
 		await MessageServices.addMessage(req.body);
+		await this.notifyMessageChanges(req.body.id!);
 		return resp.sendStatus(204);
 	}
 
@@ -51,6 +57,8 @@ export class MessageController {
 				req.userId!,
 				req.body,
 			);
+			// notify the changes
+			await this.notifyMessageChanges(req.params.id!);
 			return resp.sendStatus(200);
 		} catch (err: any) {
 			this.sendError(resp, err);
@@ -68,5 +76,15 @@ export class MessageController {
 						MessageErrorMessages[err.message as MessageErrorCodes],
 				},
 			});
+	}
+
+	private static async notifyMessageChanges(message: Message | string) {
+		const _message: Message =
+			typeof message == 'string'
+				? await MessageServices.getMessage(message)
+				: message;
+		EVENT_EMITTER.emit(
+			`update-${getChatId(_message.senderId, _message.receiverId)}`,
+		);
 	}
 }

@@ -3,13 +3,13 @@ import {
 	AttachmentsErrorCodes,
 	AttachmentsErrorStatusCodes,
 } from './attachments.errors';
-import { AttachmentsService } from './attachments.service';
+import { AttachmentsServices } from './attachments.services';
 
 export class AttachmentsController {
 	static async getAttachments(req: Request, resp: Response) {
 		const messageId = req.params.id;
 		try {
-			const attachments = await AttachmentsService.getAttachments(
+			const attachments = await AttachmentsServices.getAttachments(
 				req.userId!,
 				messageId,
 			);
@@ -28,7 +28,7 @@ export class AttachmentsController {
 			)
 			.json({
 				error: {
-					kind: 'MESSAGE',
+					kind: 'ATTACHMENTS',
 					code: err.message,
 					description:
 						AttachmentsErrorCodes[

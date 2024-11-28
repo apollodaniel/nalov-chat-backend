@@ -8,42 +8,42 @@ import {
 	MESSAGE_POST_VALIDATION,
 } from './messages.validation';
 import { MessageController } from './messages.controller';
-import { authValidationMiddleware } from '../shared/validation/validation.middlewares';
+import { ValidationController } from '../shared/validation/validation.controller';
 
 const router = Router();
 
 router.get(
 	'/api/messages',
 	checkSchema(MESSAGE_GET_VALIDATION),
-	authValidationMiddleware,
+	ValidationController.validateWithAuth,
 	MessageController.getMessages,
 );
 
 router.get(
 	'/api/messages/:id',
 	checkSchema(MESSAGE_GET_SINGLE_VALIDATION),
-	authValidationMiddleware,
-	MessageController.getSingle,
+	ValidationController.validateWithAuth,
+	MessageController.getMessage,
 );
 
 router.post(
 	'/api/messages',
 	checkSchema(MESSAGE_POST_VALIDATION),
-	authValidationMiddleware,
+	ValidationController.validateWithAuth,
 	MessageController.addMessage,
 );
 
 router.patch(
 	'/api/messages/:id',
 	checkSchema(MESSAGE_PATCH_VALIDATION),
-	authValidationMiddleware,
+	ValidationController.validateWithAuth,
 	MessageController.updateMessage,
 );
 
 router.delete(
 	'/api/messages/:id',
 	checkSchema(MESSAGE_DELETE_SINGLE_VALIDATION),
-	authValidationMiddleware,
+	ValidationController.validateWithAuth,
 	MessageController.removeMessage,
 );
 

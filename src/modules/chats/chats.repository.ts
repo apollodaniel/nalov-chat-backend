@@ -1,12 +1,9 @@
-import { AppDataSource } from '../data-source';
-import { Message } from '../entity/Message';
-import { User } from '../entity/User';
-import { IChat } from '../types/message';
-import { MessageRepository } from './Message';
+import { Repository } from 'typeorm';
+import { IChat } from '../../types/message';
+import { Message } from '../messages/messages.entity';
+import { User } from '../users/users.entity';
 
-export class ChatRepository {
-	private messageRepository =
-		AppDataSource.getRepository(Message).extend(MessageRepository);
+export class ChatRepository extends Repository<Message> {
 	async getChats(user: User | string): Promise<IChat[]> {
 		const user_id = typeof user == 'string' ? user : user.id;
 
@@ -21,8 +18,7 @@ export class ChatRepository {
 		 *
 		 * I hope it works xD
 		 * */
-		return this.messageRepository
-			.createQueryBuilder('message')
+		return this.createQueryBuilder('message')
 			.select([
 				'DISTINCT ON (LEAST(message.sender_id, message.receiver_id), GREATEST(message.sender_id, message.receiver_id))',
 				`CASE

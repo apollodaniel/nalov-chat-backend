@@ -20,7 +20,7 @@ export class MessageServices {
 		return messages;
 	}
 
-	static async getSingle(messageId: string) {
+	static async getMessage(messageId: string) {
 		const message = await this.repo.getMessage(messageId);
 
 		if (!message) throw new Error(MessageErrorCodes.MESSAGE_NOT_FOUND);

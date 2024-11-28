@@ -1,10 +1,15 @@
-import { EntityRepository, Repository } from 'typeorm';
+import { EntityRepository, Like, Repository } from 'typeorm';
 import { User } from '../entity/User';
 import { UserCredentials, UserCredentialStatus } from '../types/types';
+import { UserQuery } from './users.types';
+import { AuthErrorCodes } from '../auth/auth.errors';
 
 export class UserRepository extends Repository<User> {
 	async addUser(user: Partial<User>): Promise<void> {
 		await this.save(user);
+	}
+	async updateUser(userId: string, user: Partial<User>): Promise<void> {
+		await this.update(userId, user);
 	}
 	async removeUser(user: User | string): Promise<void> {
 		const user_id = typeof user == 'string' ? user : user.id;
@@ -27,41 +32,28 @@ export class UserRepository extends Repository<User> {
 		);
 		return await this.createQueryBuilder().whereInIds(user_ids).getMany();
 	}
-	async searchUser(field: string, value: string): Promise<User[]> {
-		return await this.createQueryBuilder()
-			.where("$field like '%$value$%'", {
-				field,
-				value,
-			})
-			.getMany();
-	}
 
-	async validateCredentials(
-		credentials: UserCredentials,
-	): Promise<UserCredentialStatus> {
-		const result = await this.find({
-			where: [
-				{
-					name: credentials.username,
-					password: credentials.password,
-				},
-				{
-					name: credentials.username,
-				},
-				{
-					password: credentials.password,
-				},
-			],
-		});
+	async getUsers(query?: UserQuery) {
+		if (!query) {
+			return await this.find();
+		}
 
-		const usernameMatch = result.find(
-			(res) => res.username == credentials.username,
-		);
-		if (result.length == 0 || !usernameMatch)
-			return UserCredentialStatus.UsernameNotExists;
-		else if (usernameMatch.password == credentials.password)
-			return UserCredentialStatus.Sucess;
+		let builder = this.createQueryBuilder();
 
-		return UserCredentialStatus.IncorrectPassword;
+		let isFirst = true;
+		for (let { field, value, strict } of query.fieldQueries) {
+			if (isFirst) {
+				isFirst = false;
+				builder = builder.where({
+					[field]: strict ? value : Like(value),
+				});
+			} else {
+				builder = builder.andWhere({
+					[field]: strict ? value : Like(value),
+				});
+			}
+		}
+
+		return await builder.getMany();
 	}
 }

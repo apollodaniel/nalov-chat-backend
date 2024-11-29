@@ -1,4 +1,5 @@
 import { AppDataSource } from '../../data-source';
+import { EVENT_EMITTER } from '../../utils/constants';
 import { getChatId } from '../../utils/functions';
 import { Message } from './messages.entity';
 import { MessageErrorCodes } from './messages.errors';
@@ -8,6 +9,16 @@ export class MessageServices {
 	private static repo = AppDataSource.getRepository(Message).extend(
 		MessageRepository.prototype,
 	);
+
+	static async notifyMessageChanges(message: Message | string) {
+		const _message: Message =
+			typeof message == 'string'
+				? await MessageServices.getMessage(message)
+				: message;
+		EVENT_EMITTER.emit(
+			`update-${getChatId(_message.senderId, _message.receiverId)}`,
+		);
+	}
 
 	/* supports both chatID and tuple with senderID and receiverID or vice versa */
 	static async getMessages(chatId: string | [string, string]) {

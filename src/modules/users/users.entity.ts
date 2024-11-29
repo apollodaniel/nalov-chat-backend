@@ -18,6 +18,6 @@ export class User {
 	name: string;
 	@Column({ select: false })
 	password: string;
-	@Column()
-	profilePicture: string = 'default/profile-pictures/default.png';
+	@Column({ default: 'default/profile-pictures/default.png' })
+	profilePicture: string;
 }

@@ -1,8 +1,11 @@
 import express, { Request, Response } from 'express';
 import { ValidationController } from '../shared/validation/validation.controller';
-import { receive_file_middleware } from '../../utils/middlewares/receive_file_middleware';
+import { StaticController } from './static.controller';
 
 const router = express.Router();
+
+// check for permission to acess files
+router.get('/files/chats/', StaticController.checkPermission);
 
 router.use('/files', express.static('files/'));
 router.use(
@@ -17,7 +20,7 @@ router.use(
 router.post(
 	'/api/upload',
 	ValidationController.validateWithAuth,
-	receive_file_middleware,
+	StaticController.fileUpload,
 	(req: Request, resp: Response) => {
 		return resp.sendStatus(204);
 	},

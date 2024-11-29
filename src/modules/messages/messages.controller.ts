@@ -1,13 +1,10 @@
 import { Request, Response } from 'express';
-import { Message } from './messages.entity';
-import { getChatId } from '../../utils/functions';
 import { MessageServices } from './messages.services';
 import {
 	MessageErrorCodes,
 	MessageErrorMessages,
 	MessageErrorStatusCodes,
 } from './messages.errors';
-import { EVENT_EMITTER } from '../../utils/constants';
 
 export class MessageController {
 	static async getMessages(req: Request, resp: Response) {
@@ -37,7 +34,7 @@ export class MessageController {
 			await MessageServices.removeMessage(messageId, req.userId!);
 
 			// notify the changes
-			await this.notifyMessageChanges(message);
+			await MessageServices.notifyMessageChanges(message);
 			return resp.sendStatus(200);
 		} catch (err: any) {
 			this.sendError(resp, err);
@@ -46,7 +43,7 @@ export class MessageController {
 
 	static async addMessage(req: Request, resp: Response) {
 		await MessageServices.addMessage(req.body);
-		await this.notifyMessageChanges(req.body.id!);
+		await MessageServices.notifyMessageChanges(req.body.id!);
 		return resp.sendStatus(204);
 	}
 
@@ -58,7 +55,7 @@ export class MessageController {
 				req.body,
 			);
 			// notify the changes
-			await this.notifyMessageChanges(req.params.id!);
+			await MessageServices.notifyMessageChanges(req.params.id!);
 			return resp.sendStatus(200);
 		} catch (err: any) {
 			this.sendError(resp, err);
@@ -76,15 +73,5 @@ export class MessageController {
 						MessageErrorMessages[err.message as MessageErrorCodes],
 				},
 			});
-	}
-
-	private static async notifyMessageChanges(message: Message | string) {
-		const _message: Message =
-			typeof message == 'string'
-				? await MessageServices.getMessage(message)
-				: message;
-		EVENT_EMITTER.emit(
-			`update-${getChatId(_message.senderId, _message.receiverId)}`,
-		);
 	}
 }

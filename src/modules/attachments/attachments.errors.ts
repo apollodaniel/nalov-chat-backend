@@ -1,15 +1,14 @@
-export enum AttachmentsErrorCodes {
-	MESSAGE_NOT_FOUND = 'MESSAGE_NOT_FOUND',
-	NO_PERMISSION = 'NO_PERMISSION', // user have no permission to do this
-}
+import { ErrorEntry } from '../shared/common.types';
 
-export const AttachmentsErrorMessages = {
-	[AttachmentsErrorCodes.MESSAGE_NOT_FOUND]: 'Message not found',
-	[AttachmentsErrorCodes.NO_PERMISSION]:
-		'You have no permission to execute this action',
-};
-
-export const AttachmentsErrorStatusCodes = {
-	[AttachmentsErrorCodes.MESSAGE_NOT_FOUND]: 404,
-	[AttachmentsErrorCodes.NO_PERMISSION]: 401,
+export const AttachmentsErrors: Record<string, ErrorEntry> = {
+	MESSAGE_NOT_FOUND: {
+		code: 'MESSAGE_NOT_FOUND',
+		message: 'Message not found',
+		statusCode: 404,
+	},
+	NO_PERMISSION: {
+		code: 'NO_PERMISSION',
+		message: 'You have no permission to execute this action',
+		statusCode: 401,
+	},
 };

@@ -1,18 +1,19 @@
 import { Request, Response } from 'express';
-import {
-	AuthErrorCodes,
-	AuthErrorMessages,
-	AuthErrorStatusCodes,
-} from './auth.errors';
 import { AuthServices } from './auth.services';
 import { cookieConfig } from '../../utils/constants';
+import { AuthErrors } from './auth.errors';
+import { CommonUtils } from '../shared/common.utils';
 
 export class AuthController {
 	// login
 	static async addAuth(req: Request, resp: Response) {
 		try {
 			// define authorization tokens
-			const auth = await AuthServices.addAuth(req.body);
+			console.log(req.body);
+			const auth = await AuthServices.addAuth({
+				username: req.body.username,
+				password: req.body.password,
+			});
 			const authToken = await AuthServices.refreshSession(auth.token);
 
 			// set tokens to cookies
@@ -29,7 +30,7 @@ export class AuthController {
 
 			return resp.sendStatus(200);
 		} catch (err: any) {
-			this.sendError(resp, err);
+			CommonUtils.sendError(resp, err);
 		}
 	}
 
@@ -50,18 +51,22 @@ export class AuthController {
 
 			return resp.sendStatus(200);
 		} catch (err: any) {
-			this.sendError(resp, err);
+			CommonUtils.sendError(resp, err);
 		}
 	}
 
 	// register
 	static async addUser(req: Request, resp: Response) {
 		try {
+			console.log(req.body);
 			// register user
 			await AuthServices.addUser(req.body);
 
 			// login user
-			const auth = await AuthServices.addAuth(req.body);
+			const auth = await AuthServices.addAuth({
+				username: req.body.username,
+				password: req.body.password,
+			});
 			const authToken = await AuthServices.refreshSession(auth.token);
 
 			// set tokens to cookies
@@ -78,17 +83,21 @@ export class AuthController {
 
 			return resp.sendStatus(200);
 		} catch (err: any) {
-			this.sendError(resp, err);
+			CommonUtils.sendError(resp, err);
 		}
 	}
 
 	static async checkAuthSession(req: Request, resp: Response) {
 		const authToken = req.cookies.authToken;
+		const refreshToken = req.cookies.refreshToken;
 		try {
+			if (!refreshToken) throw AuthErrors.NO_SESSION;
+			else if (!authToken) throw AuthErrors.EXPIRED_SESSION;
+
 			await AuthServices.checkAuthSession(authToken);
 			return resp.sendStatus(200);
 		} catch (err: any) {
-			this.sendError(resp, err);
+			CommonUtils.sendError(resp, err);
 		}
 	}
 
@@ -98,28 +107,17 @@ export class AuthController {
 			const authToken = await AuthServices.refreshSession(refreshToken);
 
 			// update token
-			req.cookies(
+			resp.cookie(
 				cookieConfig.authToken.name,
 				authToken,
 				cookieConfig.authToken.options,
 			);
 
-			return resp.sendStatus(200);
-		} catch (err: any) {
-			this.sendError(resp, err);
-		}
-	}
-
-	private static sendError(resp: Response, err: any) {
-		return resp
-			.status(AuthErrorStatusCodes[err.message as AuthErrorCodes])
-			.json({
-				error: {
-					kind: 'AUTH',
-					code: err.message,
-					description:
-						AuthErrorMessages[err.message as AuthErrorCodes],
-				},
+			return resp.status(200).json({
+				token: authToken,
 			});
+		} catch (err: any) {
+			CommonUtils.sendError(resp, err);
+		}
 	}
 }

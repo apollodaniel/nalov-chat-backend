@@ -1,44 +1,49 @@
 import { parse } from 'url';
-import message_route from '../messages/messages.ws';
-import chat_route from '../chats/chats.ws';
+import { MessagesWsController } from '../messages/messages.ws';
+import { ChatsWsController } from '../chats/chats.ws';
 import http from 'http';
 import { WebSocket } from 'ws';
-import { JsonWebTokenError } from 'jsonwebtoken';
+import { SocketsServices } from './sockets.services';
+import { ErrorEntry } from '../shared/common.types';
+import { JwtHelper } from '../../utils/jwtHelper';
 
-export function handle_routes(ws: WebSocket, request: http.IncomingMessage) {
-	const { url } = request;
+export class SocketController {
+	static async handleRoutes(ws: WebSocket, request: http.IncomingMessage) {
+		const { url } = request;
 
-	if (!url) return;
+		if (!url) return;
 
-	const query = parse(url!, true).query;
-	const token = query.token;
+		const query = parse(url!, true).query;
+		const token: string = query.token as string;
 
-	try {
-		const verified_token = Auth.verify_auth_token((token || '').toString());
-		const user_id = new Auth({ token: verified_token }).user_id;
-
-		if (url!.startsWith('/api/messages/listen')) {
-			message_route(ws, request, user_id);
-		} else if (url!.startsWith('/api/chats/listen')) {
-			chat_route(ws, request, user_id);
-		} else {
-			ws.close(1000, 'Path not handled');
+		if (!JwtHelper.checkValid(token, 'Auth')) {
+			return ws.close(601);
 		}
 
-		ws.on('error', (err: any) => {
+		try {
+			console.log(token);
+			console.log(url);
+			const userId = await SocketsServices.getUserId(token);
+			console.log(userId);
+
+			if (url!.startsWith('/api/messages/listen')) {
+				MessagesWsController.handleRoute(ws, request, userId);
+			} else if (url!.startsWith('/api/chats/listen')) {
+				ChatsWsController.handleRoute(ws, request, userId);
+			} else {
+				ws.close(4404);
+			}
+
+			ws.on('error', (err: any) => {
+				console.log(err.message);
+			});
+		} catch (err: any) {
 			console.log(err.message);
-		});
-	} catch (err: any) {
-		if (
-			err instanceof JsonWebTokenError &&
-			err.message.toLowerCase().includes('malformed')
-		) {
-			ws.send('invalid token');
-		} else if (
-			err instanceof JsonWebTokenError &&
-			err.message.toLowerCase().includes('malformed')
-		) {
-			ws.send('expired token');
-		} else ws.close();
+			ws.close(err.statusCode + 4000, JSON.stringify(err));
+		}
+	}
+
+	static sendError(ws: WebSocket, err: ErrorEntry) {
+		ws.close(err.statusCode, JSON.stringify(err));
 	}
 }

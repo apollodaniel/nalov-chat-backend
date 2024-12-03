@@ -1,19 +1,19 @@
-export enum StaticFileErrorCodes {
-	NO_PERMISSION = 'NO_PERMISSION', // user have no permission to do this
-	UNKNOWN_ERROR = 'UNKNOWN_ERROR',
-	NO_ATTACHMENTS = 'NO_ATTACHMENTS', // user have no permission to do this
-}
+import { ErrorEntry } from '../shared/common.types';
 
-export const StaticFileErrorMessages = {
-	[StaticFileErrorCodes.NO_PERMISSION]:
-		'You have no permission to execute this action',
-	[StaticFileErrorCodes.UNKNOWN_ERROR]: 'AN UNKNOWN ERROR OCCURRED',
-	[StaticFileErrorCodes.NO_ATTACHMENTS]:
-		'There is no attachment available for this message',
-};
-
-export const StaticFileErrorStatusCodes = {
-	[StaticFileErrorCodes.NO_PERMISSION]: 401,
-	[StaticFileErrorCodes.UNKNOWN_ERROR]: 500,
-	[StaticFileErrorCodes.NO_ATTACHMENTS]: 400,
+export const StaticFileErrors: Record<string, ErrorEntry> = {
+	NO_PERMISSION: {
+		code: 'NO_PERMISSION',
+		message: 'You have no permission to execute this action',
+		statusCode: 401,
+	},
+	UNKNOWN_ERROR: {
+		code: 'UNKNOWN_ERROR',
+		message: 'AN UNKNOWN ERROR OCCURRED',
+		statusCode: 500,
+	},
+	NO_ATTACHMENTS: {
+		code: 'NO_ATTACHMENTS',
+		message: 'There is no attachment available for this message',
+		statusCode: 400,
+	},
 };

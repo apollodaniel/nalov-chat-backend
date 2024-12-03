@@ -1,41 +1,48 @@
 import { IncomingMessage } from 'http';
 import { parse } from 'url';
+import { EVENT_EMITTER } from '../../utils/constants';
 import { WebSocket } from 'ws';
+import { MessageServices } from './messages.services';
+import { getChatId } from '../../utils/functions';
+import { CommonUtils } from '../shared/common.utils';
+import { Response } from 'express';
 
-export default function handle_route(
-	ws: WebSocket,
-	request: IncomingMessage,
-	user_id: string,
-) {
-	const query = parse(request.url!, true).query;
-	const receiver_id = query.receiver_id;
-	if (!receiver_id) {
-		ws.send('receiver id must not be empty');
-		return;
-	}
-	let listener = async (args: any) => {
-		// must be receiver id on opt
-		try {
-			const messages = await get_messages(
-				user_id,
-				receiver_id.toString(),
-			);
-			return ws.send(JSON.stringify(messages));
-		} catch (err: any) {
-			console.log(err.message);
+export class MessagesWsController {
+	static async handleRoute(
+		ws: WebSocket,
+		request: IncomingMessage,
+		userId: string,
+	) {
+		const query = parse(request.url!, true).query;
+		const receiverId = query.receiverId?.toString();
+
+		if (!receiverId) {
+			ws.close(4400, 'receiver id must not be empty');
+			return;
 		}
-	};
+		let listener = async (args: any) => {
+			// must be receiver id on opt
+			console.log('received event');
+			try {
+				const messages = await MessageServices.getMessages([
+					userId,
+					receiverId,
+				]);
+				return ws.send(JSON.stringify(messages));
+			} catch (err: any) {
+				ws.close(err.statusCode + 4000, JSON.stringify(err));
+			}
+		};
 
-	EVENT_EMITTER.on(
-		`update-${get_users_chat_id(receiver_id.toString(), user_id)}`,
-		listener,
-	);
+		console.log('Connected');
+		EVENT_EMITTER.on(`update-${getChatId(receiverId, userId)}`, listener);
 
-	ws.on('close', () => {
-		EVENT_EMITTER.off(
-			`update-${get_users_chat_id(receiver_id.toString(), user_id)}`,
-			listener,
-		);
-		console.log(`Closed message connection for ${user_id}`);
-	});
+		ws.on('close', () => {
+			EVENT_EMITTER.off(
+				`update-${getChatId(receiverId, userId)}`,
+				listener,
+			);
+			console.log(`Closed message connection for ${userId}`);
+		});
+	}
 }

@@ -1,14 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
 import { validationResult } from 'express-validator';
-import { AuthRepository } from '../../auth/auth.repository';
-import { AppDataSource } from '../../../data-source';
-import { Auth } from '../../auth/auth.entity';
 import { ValidationServices } from './validation.services';
-import {
-	AuthErrorCodes,
-	AuthErrorMessages,
-	AuthErrorStatusCodes,
-} from '../../auth/auth.errors';
+import { ErrorEntry } from '../common.types';
+import { CommonUtils } from '../common.utils';
 
 export class ValidationController {
 	static validate(req: Request, resp: Response, next: NextFunction) {
@@ -35,19 +29,7 @@ export class ValidationController {
 			req.userId = await ValidationServices.checkValidation(authToken);
 			return next();
 		} catch (err: any) {
-			this.sendError(resp, err);
+			CommonUtils.sendError(resp, err);
 		}
-	}
-	private static sendError(resp: Response, err: any) {
-		return resp
-			.status(AuthErrorStatusCodes[err.message as AuthErrorCodes])
-			.json({
-				error: {
-					kind: 'USERS',
-					code: err.message,
-					description:
-						AuthErrorMessages[err.message as AuthErrorCodes],
-				},
-			});
 	}
 }

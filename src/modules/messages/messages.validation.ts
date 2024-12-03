@@ -26,13 +26,13 @@ export const MESSAGE_DELETE_SINGLE_VALIDATION: Schema = {
 };
 
 export const MESSAGE_GET_VALIDATION: Schema = {
-	receiver_id: {
+	receiverId: {
 		in: ['query'],
 		notEmpty: {
-			errorMessage: 'receiver_id must not be empty',
+			errorMessage: 'receiverId must not be empty',
 		},
 		isString: {
-			errorMessage: 'receiver_id must be a valid string',
+			errorMessage: 'receiverId must be a valid string',
 		},
 	},
 };
@@ -44,13 +44,13 @@ export const MESSAGE_POST_VALIDATION: Schema = {
 			options: () => gen_v4(),
 		},
 	},
-	receiver_id: {
+	receiverId: {
 		in: ['body'],
 		notEmpty: {
-			errorMessage: 'receiver_id must not be empty',
+			errorMessage: 'receiverId must not be empty',
 		},
 		isString: {
-			errorMessage: 'receiver_id must be a valid string',
+			errorMessage: 'receiverId must be a valid string',
 		},
 	},
 	content: {
@@ -71,13 +71,13 @@ export const MESSAGE_POST_VALIDATION: Schema = {
 	// 		options: () => Date.now(),
 	// 	},
 	// }
-	creation_date: {
+	creationDate: {
 		in: ['body'],
 		customSanitizer: {
 			options: () => Date.now(),
 		},
 	},
-	last_modified_date: {
+	lastModifiedDate: {
 		in: ['body'],
 		customSanitizer: {
 			options: () => Date.now(),
@@ -112,7 +112,7 @@ export const MESSAGE_PATCH_VALIDATION: Schema = {
 			errorMessage: 'content must be between 1-300 char long',
 		},
 	},
-	last_modified_date: {
+	lastModifiedDate: {
 		in: ['body'],
 		customSanitizer: {
 			options: () => Date.now(),

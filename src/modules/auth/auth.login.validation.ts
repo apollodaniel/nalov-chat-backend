@@ -1,24 +1,24 @@
-import { Schema } from "express-validator";
-import { USERNAME_VALIDATION_REGEX } from "../constants";
+import { Schema } from 'express-validator';
+import { USERNAME_VALIDATION_REGEX } from '../../utils/constants';
 
 export const LOGIN_VALIDATION_SCHEMA: Schema = {
 	username: {
-		in: ["body"],
+		in: ['body'],
 		notEmpty: {
-			errorMessage: "username must not be empty"
+			errorMessage: 'username must not be empty',
 		},
 		matches: {
 			options: USERNAME_VALIDATION_REGEX,
-			errorMessage: "invalid username"
-		}
+			errorMessage: 'invalid username',
+		},
 	},
 	password: {
-		in: ["body"],
+		in: ['body'],
 		notEmpty: {
-			errorMessage: "password must not be empty"
+			errorMessage: 'password must not be empty',
 		},
 		isStrongPassword: {
-			errorMessage: "invalid password"
-		}
-	}
+			errorMessage: 'invalid password',
+		},
+	},
 };

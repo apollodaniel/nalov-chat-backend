@@ -1,6 +1,12 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
-import { User } from './entity/User';
+import dotenv from 'dotenv';
+import { Auth } from './modules/auth/auth.entity';
+import { Message } from './modules/messages/messages.entity';
+import { Attachment } from './modules/attachments/attachments.entity';
+import { User } from './modules/users/users.entity';
+
+dotenv.config();
 
 export const AppDataSource = new DataSource({
 	type: 'postgres',
@@ -11,7 +17,13 @@ export const AppDataSource = new DataSource({
 	database: process.env.POSTGRES_DB,
 	synchronize: true,
 	logging: false,
-	entities: [User],
-	migrations: [],
+	entities: [
+		Auth,
+		Message,
+		Attachment,
+		User, // Handles both TS (dev) and JS (prod)
+	],
+	migrations: ['./migrations/*.ts'], // Update path if needed
 	subscribers: [],
+	migrationsTableName: 'migrations',
 });

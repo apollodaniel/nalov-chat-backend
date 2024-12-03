@@ -2,10 +2,12 @@ import { Repository } from 'typeorm';
 import { IChat } from '../../types/message';
 import { Message } from '../messages/messages.entity';
 import { User } from '../users/users.entity';
+import { AppDataSource } from '../../data-source';
+import { MessageRepository } from '../messages/messages.repository';
 
-export class ChatRepository extends Repository<Message> {
-	async getChats(user: User | string): Promise<IChat[]> {
-		const user_id = typeof user == 'string' ? user : user.id;
+export const ChatRepository = AppDataSource.getRepository(Message).extend({
+	async getChats(user: User | string): Promise<any[]> {
+		const userId = typeof user == 'string' ? user : user.id;
 
 		/*
 		 *
@@ -18,29 +20,56 @@ export class ChatRepository extends Repository<Message> {
 		 *
 		 * I hope it works xD
 		 * */
-		return this.createQueryBuilder('message')
-			.select([
-				'DISTINCT ON (LEAST(message.sender_id, message.receiver_id), GREATEST(message.sender_id, message.receiver_id))',
-				`CASE
-                WHEN message.sender_id = :user_id THEN receiver
-                ELSE sender
-            END AS user`,
-				'last_message',
-				`(SELECT count(*)
-						FROM messages subMessage WHERE subMessage.seen_date IS NULL AND subMessage.sender_id = user.id AND receiver_id = :user_id) as unseen_message_count`,
-			])
-			.innerJoin('message.sender', 'sender')
-			.innerJoin('message.receiver', 'receiver')
-			.where(':user_id IN (message.receiver_id, message.sender_id)', {
-				user_id,
-			})
-			.orderBy('LEAST(message.sender_id, message.receiver_id)', 'ASC')
-			.addOrderBy(
-				'GREATEST(message.sender_id, message.receiver_id)',
-				'ASC',
-			)
-			.addOrderBy('message.creation_date', 'DESC')
-			.setParameters({ user_id })
-			.getRawMany();
-	}
-}
+
+		const rawQuery = `
+  SELECT DISTINCT ON (
+    LEAST("message"."senderId", "message"."receiverId"),
+    GREATEST("message"."senderId", "message"."receiverId")
+  )
+	to_jsonb(
+		CASE
+			WHEN "message"."senderId" = $1 THEN "receiver"
+			ELSE "sender"
+		END
+	) - 'password' AS "user",
+	"message".id AS "lastMessage",
+    (
+      SELECT COUNT(*)::int
+      FROM "message" "subMessage"
+      WHERE "subMessage"."seenDate" IS NULL
+        AND "subMessage"."senderId" =
+          CASE
+            WHEN "message"."senderId" = $1 THEN "message"."receiverId"
+            ELSE "message"."senderId"
+          END
+        AND "subMessage"."receiverId" = $1
+    ) AS "unseenMessageCount"
+  FROM "message"
+  INNER JOIN "user" "sender" ON "sender"."id" = "message"."senderId"
+  INNER JOIN "user" "receiver" ON "receiver"."id" = "message"."receiverId"
+  WHERE $1 IN ("message"."receiverId", "message"."senderId")
+  ORDER BY
+    LEAST("message"."senderId", "message"."receiverId") ASC,
+    GREATEST("message"."senderId", "message"."receiverId") ASC,
+    "message"."creationDate" DESC;
+    `;
+
+		const result: any[] = await Promise.all(
+			(await this.query(rawQuery, [userId])).map(async (i: any) => {
+				const message = await MessageRepository.createQueryBuilder(
+					'message',
+				)
+					.leftJoinAndSelect('message.attachments', 'attachments')
+					.whereInIds(i.lastMessage)
+					.getOne();
+				return {
+					...i,
+					lastMessage: message,
+				};
+			}),
+		);
+		console.log(result);
+
+		return result;
+	},
+});

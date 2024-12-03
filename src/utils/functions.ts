@@ -1,7 +1,7 @@
 import { IAttachment } from '../types/message';
 
 export function getChatId(user1: string, user2: string) {
-	return Array.from([user1, user2]).sort().join('');
+	return Array.from([user1, user2]).sort().join('|');
 }
 export function parseChatId(chatId: string): string[] {
 	return chatId.split('|');

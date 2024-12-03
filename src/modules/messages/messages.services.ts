@@ -2,19 +2,17 @@ import { AppDataSource } from '../../data-source';
 import { EVENT_EMITTER } from '../../utils/constants';
 import { getChatId } from '../../utils/functions';
 import { Message } from './messages.entity';
-import { MessageErrorCodes } from './messages.errors';
+import { MessageErrors } from './messages.errors';
 import { MessageRepository } from './messages.repository';
 
 export class MessageServices {
-	private static repo = AppDataSource.getRepository(Message).extend(
-		MessageRepository.prototype,
-	);
-
 	static async notifyMessageChanges(message: Message | string) {
 		const _message: Message =
 			typeof message == 'string'
 				? await MessageServices.getMessage(message)
 				: message;
+
+		console.log(_message);
 		EVENT_EMITTER.emit(
 			`update-${getChatId(_message.senderId, _message.receiverId)}`,
 		);
@@ -22,7 +20,7 @@ export class MessageServices {
 
 	/* supports both chatID and tuple with senderID and receiverID or vice versa */
 	static async getMessages(chatId: string | [string, string]) {
-		const messages = await this.repo.getMessages(
+		const messages = await MessageRepository.getMessages(
 			typeof chatId != 'string'
 				? getChatId(chatId[0], chatId[1])
 				: chatId,
@@ -32,22 +30,22 @@ export class MessageServices {
 	}
 
 	static async getMessage(messageId: string) {
-		const message = await this.repo.getMessage(messageId);
+		const message = await MessageRepository.getMessage(messageId);
 
-		if (!message) throw new Error(MessageErrorCodes.MESSAGE_NOT_FOUND);
+		if (!message) throw MessageErrors.MESSAGE_NOT_FOUND;
 
 		return message;
 	}
 
 	// must verify message owner
 	static async removeMessage(messageId: string, userId: string) {
-		const message: Message | null = await this.repo.getMessage(messageId);
+		const message: Message | null =
+			await MessageRepository.getMessage(messageId);
 
-		if (!message) throw new Error(MessageErrorCodes.MESSAGE_NOT_FOUND);
-		else if (message.senderId != userId)
-			throw new Error(MessageErrorCodes.NO_PERMISSION);
+		if (!message) throw MessageErrors.MESSAGE_NOT_FOUND;
+		else if (message.senderId != userId) throw MessageErrors.NO_PERMISSION;
 
-		await this.repo.removeMessage(messageId);
+		await MessageRepository.removeMessage(messageId);
 	}
 	// must verify message owner
 	static async updateMessage(
@@ -56,16 +54,16 @@ export class MessageServices {
 		message: Partial<Message>,
 	) {
 		const oldMessage: Message | null =
-			await this.repo.getMessage(messageId);
+			await MessageRepository.getMessage(messageId);
 
-		if (!oldMessage) throw new Error(MessageErrorCodes.MESSAGE_NOT_FOUND);
+		if (!oldMessage) throw MessageErrors.MESSAGE_NOT_FOUND;
 		else if (oldMessage.senderId != userId)
-			throw new Error(MessageErrorCodes.NO_PERMISSION);
+			throw MessageErrors.NO_PERMISSION;
 
-		await this.repo.updateMessage(messageId, message);
+		await MessageRepository.updateMessage(messageId, message);
 	}
 
 	static async addMessage(message: Partial<Message>) {
-		await this.repo.addMessage(message);
+		await MessageRepository.addMessage(message);
 	}
 }

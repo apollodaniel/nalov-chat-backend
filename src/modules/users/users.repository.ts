@@ -1,20 +1,19 @@
-import { EntityRepository, Like, Repository } from 'typeorm';
-import { User } from '../entity/User';
-import { UserCredentials, UserCredentialStatus } from '../types/types';
+import { Like } from 'typeorm';
 import { UserQuery } from './users.types';
-import { AuthErrorCodes } from '../auth/auth.errors';
+import { User } from './users.entity';
+import { AppDataSource } from '../../data-source';
 
-export class UserRepository extends Repository<User> {
+export const UserRepository = AppDataSource.getRepository(User).extend({
 	async addUser(user: Partial<User>): Promise<void> {
 		await this.save(user);
-	}
+	},
 	async updateUser(userId: string, user: Partial<User>): Promise<void> {
 		await this.update(userId, user);
-	}
+	},
 	async removeUser(user: User | string): Promise<void> {
 		const user_id = typeof user == 'string' ? user : user.id;
 		await this.createQueryBuilder().whereInIds(user_id).delete().execute();
-	}
+	},
 	async getUser(
 		user: User | User[] | string | string[],
 	): Promise<User | User[] | null> {
@@ -31,7 +30,7 @@ export class UserRepository extends Repository<User> {
 			typeof _user == 'string' ? _user : _user.id,
 		);
 		return await this.createQueryBuilder().whereInIds(user_ids).getMany();
-	}
+	},
 
 	async getUsers(query?: UserQuery) {
 		if (!query) {
@@ -55,5 +54,5 @@ export class UserRepository extends Repository<User> {
 		}
 
 		return await builder.getMany();
-	}
-}
+	},
+});

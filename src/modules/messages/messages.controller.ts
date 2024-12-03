@@ -1,16 +1,14 @@
 import { Request, Response } from 'express';
 import { MessageServices } from './messages.services';
-import {
-	MessageErrorCodes,
-	MessageErrorMessages,
-	MessageErrorStatusCodes,
-} from './messages.errors';
+import { CommonUtils } from '../shared/common.utils';
+import { Message } from './messages.entity';
 
 export class MessageController {
 	static async getMessages(req: Request, resp: Response) {
+		console.log(req.query.receiverId);
 		const messages = await MessageServices.getMessages([
 			req.userId!,
-			req.body.receiver_id,
+			req.query.receiverId!.toString(),
 		]);
 		return resp.status(200).json(messages);
 	}
@@ -20,7 +18,7 @@ export class MessageController {
 			const message = await MessageServices.getMessage(req.params.id!);
 			return resp.status(200).send(message);
 		} catch (err: any) {
-			this.sendError(resp, err);
+			CommonUtils.sendError(resp, err);
 		}
 	}
 
@@ -37,12 +35,15 @@ export class MessageController {
 			await MessageServices.notifyMessageChanges(message);
 			return resp.sendStatus(200);
 		} catch (err: any) {
-			this.sendError(resp, err);
+			CommonUtils.sendError(resp, err);
 		}
 	}
 
 	static async addMessage(req: Request, resp: Response) {
-		await MessageServices.addMessage(req.body);
+		await MessageServices.addMessage({
+			...req.body,
+			senderId: req.userId!,
+		});
 		await MessageServices.notifyMessageChanges(req.body.id!);
 		return resp.sendStatus(204);
 	}
@@ -58,20 +59,7 @@ export class MessageController {
 			await MessageServices.notifyMessageChanges(req.params.id!);
 			return resp.sendStatus(200);
 		} catch (err: any) {
-			this.sendError(resp, err);
+			CommonUtils.sendError(resp, err);
 		}
-	}
-
-	private static sendError(resp: Response, err: any) {
-		return resp
-			.status(MessageErrorStatusCodes[err.message as MessageErrorCodes])
-			.json({
-				error: {
-					kind: 'MESSAGE',
-					code: err.message,
-					description:
-						MessageErrorMessages[err.message as MessageErrorCodes],
-				},
-			});
 	}
 }

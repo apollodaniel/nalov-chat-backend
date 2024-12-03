@@ -9,32 +9,45 @@ import {
 import { User } from '../users/users.entity';
 import { Attachment } from '../attachments/attachments.entity';
 
-@Entity()
+@Entity({
+	orderBy: {
+		creationDate: 'ASC',
+	},
+})
 export class Message {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;
 
 	@Column()
 	content: string;
-	@Column()
+
+	@Column('bigint')
 	creationDate: number;
-	@Column()
+
+	@Column('bigint')
 	lastModifiedDate: number;
+
 	@Column('uuid')
 	senderId: string;
+
 	@Column('uuid')
 	receiverId: string;
-	@Column()
+
+	@Column('bigint', { nullable: true })
 	seenDate: number | null;
 
-	@ManyToOne(() => User, (user: User) => user.id, { onDelete: 'CASCADE' })
+	@ManyToOne(() => User, (user) => user.sentMessages, { onDelete: 'CASCADE' })
 	@JoinColumn({ name: 'senderId' })
 	sender: User;
 
-	@ManyToOne(() => User, (user: User) => user.id, { onDelete: 'CASCADE' })
+	@ManyToOne(() => User, (user) => user.receivedMessages, {
+		onDelete: 'CASCADE',
+	})
 	@JoinColumn({ name: 'receiverId' })
 	receiver: User;
 
-	@OneToMany(() => Attachment, (att: Attachment) => att.message)
+	@OneToMany(() => Attachment, (attachment) => attachment.message, {
+		eager: true,
+	})
 	attachments: Attachment[];
 }

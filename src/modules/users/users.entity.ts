@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryColumn } from 'typeorm';
+import { Entity, Column, PrimaryColumn, OneToMany } from 'typeorm';
+import { Message } from '../messages/messages.entity';
 
 export interface IUser {
 	id?: string;
@@ -12,7 +13,9 @@ export interface IUser {
 export class User {
 	@PrimaryColumn('uuid')
 	id: string;
-	@Column()
+	@Column({
+		unique: true,
+	})
 	username: string;
 	@Column()
 	name: string;
@@ -20,4 +23,9 @@ export class User {
 	password: string;
 	@Column({ default: 'default/profile-pictures/default.png' })
 	profilePicture: string;
+
+	@OneToMany(() => Message, (Message) => Message.senderId)
+	sentMessages: Message;
+	@OneToMany(() => Message, (Message) => Message.receiverId)
+	receivedMessages: Message;
 }

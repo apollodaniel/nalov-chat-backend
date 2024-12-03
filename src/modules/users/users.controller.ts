@@ -2,11 +2,7 @@ import { Request, Response } from 'express';
 import { UsersServices } from './users.services';
 import { User } from './users.entity';
 import { UserQuery, UserQueryDefaults } from './users.types';
-import {
-	UserErrorCodes,
-	UserErrorMessages,
-	UserErrorStatusCodes,
-} from './users.errors';
+import { CommonUtils } from '../shared/common.utils';
 
 export class UsersController {
 	static async getUsers(req: Request, resp: Response) {
@@ -30,9 +26,9 @@ export class UsersController {
 			}
 		});
 
-		const users = UsersServices.getUsers(query);
+		const users = await UsersServices.getUsers(query);
 
-		return resp.status(200).json(users);
+		return resp.status(200).send(users);
 	}
 
 	static async getUser(req: Request, resp: Response) {
@@ -44,7 +40,7 @@ export class UsersController {
 
 			return resp.status(200).json(user);
 		} catch (err: any) {
-			this.sendError(resp, err);
+			CommonUtils.sendError(resp, err);
 		}
 	}
 
@@ -55,7 +51,7 @@ export class UsersController {
 			await UsersServices.removeUser(userId!);
 			return resp.sendStatus(200);
 		} catch (err: any) {
-			this.sendError(resp, err);
+			CommonUtils.sendError(resp, err);
 		}
 	}
 
@@ -67,20 +63,7 @@ export class UsersController {
 			await UsersServices.updateUser(userId!, user);
 			return resp.sendStatus(200);
 		} catch (err: any) {
-			this.sendError(resp, err);
+			CommonUtils.sendError(resp, err);
 		}
-	}
-
-	private static sendError(resp: Response, err: any) {
-		return resp
-			.status(UserErrorStatusCodes[err.message as UserErrorCodes])
-			.json({
-				error: {
-					kind: 'USERS',
-					code: err.message,
-					description:
-						UserErrorMessages[err.message as UserErrorCodes],
-				},
-			});
 	}
 }

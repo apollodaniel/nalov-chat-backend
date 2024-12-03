@@ -1,11 +1,8 @@
 import { NextFunction, Request, Response } from 'express';
-import {
-	StaticFileErrorCodes,
-	StaticFileErrorMessages,
-	StaticFileErrorStatusCodes,
-} from './static.errors';
+import { StaticFileErrors } from './static.errors';
 import { MessageServices } from '../messages/messages.services';
 import { StaticServices } from './static.services';
+import { CommonUtils } from '../shared/common.utils';
 
 export class StaticController {
 	static async checkPermission(
@@ -22,7 +19,7 @@ export class StaticController {
 		}
 
 		// unauthorized
-		this.sendError(resp, new Error(StaticFileErrorCodes.NO_PERMISSION));
+		CommonUtils.sendError(resp, StaticFileErrors.NO_PERMISSION);
 	}
 
 	static async fileUpload(req: Request, resp: Response) {
@@ -51,27 +48,10 @@ export class StaticController {
 			req.on('end', onExit);
 			req.on('close', onExit);
 			req.on('error', (e) => {
-				this.sendError(resp, onError(e));
+				CommonUtils.sendError(resp, onError(e));
 			});
 		} catch (err: any) {
-			this.sendError(resp, err);
+			CommonUtils.sendError(resp, err);
 		}
-	}
-
-	private static sendError(resp: Response, err: any) {
-		return resp
-			.status(
-				StaticFileErrorStatusCodes[err.message as StaticFileErrorCodes],
-			)
-			.json({
-				error: {
-					kind: 'MESSAGE',
-					code: err.message,
-					description:
-						StaticFileErrorMessages[
-							err.message as StaticFileErrorCodes
-						],
-				},
-			});
 	}
 }

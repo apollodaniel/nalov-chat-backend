@@ -1,10 +1,10 @@
+import { configDotenv } from 'dotenv';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 
+configDotenv();
+
 export class JwtHelper {
-	static verify(
-		token: string,
-		type: 'Refresh' | 'Auth',
-	): string | JwtPayload {
+	static verify(token: string, type: 'Refresh' | 'Auth'): any {
 		return jwt.verify(
 			token,
 			type == 'Refresh'
@@ -28,9 +28,15 @@ export class JwtHelper {
 		}
 	}
 	static signAuthToken(payload: any): string {
-		return jwt.sign(payload, process.env.JWT_AUTH_TOKEN!, {
-			expiresIn: '30M',
-		});
+		return jwt.sign(
+			{
+				payload: payload,
+			},
+			process.env.JWT_AUTH_TOKEN!,
+			{
+				expiresIn: '30M',
+			},
+		);
 	}
 	static signRefreshToken(payload: any): string {
 		return jwt.sign(payload, process.env.JWT_REFRESH_TOKEN!);

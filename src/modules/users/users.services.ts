@@ -1,39 +1,34 @@
-import { AppDataSource } from '../../data-source';
 import { User } from './users.entity';
-import { UserErrorCodes } from './users.errors';
+import { UserErrors } from './users.errors';
 import { UserRepository } from './users.repository';
 import { UserQuery } from './users.types';
 
 export class UsersServices {
-	private static repo = AppDataSource.getRepository(User).extend(
-		UserRepository.prototype,
-	);
 	static async getUsers(query?: UserQuery): Promise<User[]> {
-		return await this.repo.getUsers(query);
+		return await UserRepository.getUsers(query);
 	}
-	static async getUser(userId: string): Promise<User> {
-		const user = await this.repo.getUser(userId);
-		if (!user) throw new Error(UserErrorCodes.USER_NOT_FOUND);
+	static async getUser(userId: string | string[]): Promise<User | User[]> {
+		const user = await UserRepository.getUser(userId);
+		if (!user) throw UserErrors.USER_NOT_FOUND;
 
 		return user;
 	}
 	static async removeUser(userId: string): Promise<void> {
-		const userExists = await this.repo.exists({
+		const userExists = await UserRepository.exists({
 			where: {
 				id: userId,
 			},
 		});
 
-		if (!userExists) throw new Error(UserErrorCodes.USER_NOT_FOUND);
+		if (!userExists) throw UserErrors.USER_NOT_FOUND;
 
-		return await this.repo.removeUser(userId);
+		return await UserRepository.removeUser(userId);
 	}
 	static async updateUser(userId: string, user: Partial<User>) {
-		const userExists = await this.repo
-			.createQueryBuilder()
+		const userExists = await UserRepository.createQueryBuilder()
 			.whereInIds(userId)
 			.getExists();
-		if (!userExists) throw new Error(UserErrorCodes.USER_NOT_FOUND);
-		await this.repo.updateUser(userId, user);
+		if (!userExists) throw UserErrors.USER_NOT_FOUND;
+		await UserRepository.updateUser(userId, user);
 	}
 }

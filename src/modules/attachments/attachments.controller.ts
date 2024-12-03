@@ -1,9 +1,6 @@
 import { Request, Response } from 'express';
-import {
-	AttachmentsErrorCodes,
-	AttachmentsErrorStatusCodes,
-} from './attachments.errors';
 import { AttachmentsServices } from './attachments.services';
+import { CommonUtils } from '../shared/common.utils';
 
 export class AttachmentsController {
 	static async getAttachments(req: Request, resp: Response) {
@@ -15,26 +12,7 @@ export class AttachmentsController {
 			);
 			return resp.status(200).json(attachments);
 		} catch (err: any) {
-			return this.sendError(resp, err);
+			CommonUtils.sendError(resp, err);
 		}
-	}
-
-	private static sendError(resp: Response, err: any) {
-		return resp
-			.status(
-				AttachmentsErrorStatusCodes[
-					err.message as AttachmentsErrorCodes
-				],
-			)
-			.json({
-				error: {
-					kind: 'ATTACHMENTS',
-					code: err.message,
-					description:
-						AttachmentsErrorCodes[
-							err.message as AttachmentsErrorCodes
-						],
-				},
-			});
 	}
 }

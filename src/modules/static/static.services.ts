@@ -5,21 +5,17 @@ import { AttachmentRepository } from '../attachments/attachments.repository';
 import pdftopic from 'pdftopic';
 import { Message } from '../messages/messages.entity';
 import { MessageServices } from '../messages/messages.services';
-import { StaticFileErrorCodes } from './static.errors';
+import { StaticFileErrors } from './static.errors';
 
 interface WritableAttachment extends Attachment {
 	fileStream: fs.WriteStream;
 }
 
 export class StaticServices {
-	private static repo = AppDataSource.getRepository(Attachment).extend(
-		AttachmentRepository.prototype,
-	);
-
 	private static async notifyAttachment(attachment: Attachment) {
-		await this.repo.updateAttachment(attachment.id, {
+		await AttachmentRepository.updateAttachment(attachment.id, {
 			...attachment,
-			timestamp: Date.now(),
+			date: new Date(Date.now()),
 		});
 		await MessageServices.notifyMessageChanges(attachment.messageId);
 	}
@@ -50,7 +46,7 @@ export class StaticServices {
 				encoding: 'binary',
 			});
 
-			await this.repo.updateAttachment(attachment.id, {
+			await AttachmentRepository.updateAttachment(attachment.id, {
 				...attachment,
 				previewPath: previewPath,
 			});
@@ -102,7 +98,7 @@ export class StaticServices {
 		//	update_attachment(
 		//		new Attachment({ ...attachment }).toUpdateMimeType(mimeType),
 		//	);
-		this.repo.updateAttachment(attachment.id, {
+		AttachmentRepository.updateAttachment(attachment.id, {
 			...attachment,
 			mimeType: mimeType,
 		});
@@ -270,7 +266,7 @@ export class StaticServices {
 		onExit: () => void;
 	}> {
 		let attachments: WritableAttachment[] = (
-			await this.repo.getAttachments(message.id)
+			await AttachmentRepository.getAttachments(message.id)
 		).map((a: Attachment) => {
 			const stream = fs.createWriteStream(a.path, {
 				encoding: 'binary',
@@ -282,8 +278,7 @@ export class StaticServices {
 			} as WritableAttachment;
 		});
 
-		if (attachments.length === 0)
-			throw new Error(StaticFileErrorCodes.NO_ATTACHMENTS);
+		if (attachments.length === 0) throw StaticFileErrors.NO_ATTACHMENTS;
 
 		// create message directory
 		let splitted_path = attachments[0].path.split('/');
@@ -325,7 +320,7 @@ export class StaticServices {
 			},
 			onError: () => {
 				attachments.forEach((a) => a.fileStream.end());
-				return new Error(StaticFileErrorCodes.UNKNOWN_ERROR);
+				return StaticFileErrors.UNKNOWN_ERROR;
 			},
 		};
 	}

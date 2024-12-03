@@ -1,15 +1,14 @@
-export enum UserErrorCodes {
-	USER_NOT_FOUND = 'USER_NOT_FOUND',
-	NO_PERMISSION = 'NO_PERMISSION', // user have no permission to do this
-}
+import { ErrorEntry } from '../shared/common.types';
 
-export const UserErrorMessages = {
-	[UserErrorCodes.USER_NOT_FOUND]: 'User not found',
-	[UserErrorCodes.NO_PERMISSION]:
-		'You have no permission to execute this action',
-};
-
-export const UserErrorStatusCodes = {
-	[UserErrorCodes.USER_NOT_FOUND]: 404,
-	[UserErrorCodes.NO_PERMISSION]: 401,
+export const UserErrors: Record<string, ErrorEntry> = {
+	USER_NOT_FOUND: {
+		code: 'USER_NOT_FOUND',
+		message: 'User not found',
+		statusCode: 404,
+	},
+	NO_PERMISSION: {
+		code: 'NO_PERMISSION',
+		message: 'You have no permission to execute this action',
+		statusCode: 401,
+	},
 };

@@ -1,59 +1,46 @@
-import { AppDataSource } from '../../data-source';
 import { User } from '../users/users.entity';
 import { UserRepository } from '../users/users.repository';
 import { Auth } from './auth.entity';
-import { AuthErrorCodes } from './auth.errors';
+import { AuthErrors } from './auth.errors';
 import { AuthRepository } from './auth.repository';
 import { AuthCredentials } from './auth.types';
 
 export class AuthServices {
-	private static repo = AppDataSource.getRepository(Auth).extend(
-		AuthRepository.prototype,
-	);
-	private static usersRepo = AppDataSource.getRepository(User).extend(
-		UserRepository.prototype,
-	);
-
 	// login
 	static async addAuth(credentials: Partial<AuthCredentials>): Promise<Auth> {
-		const user = await this.repo.validateCredentials(credentials);
-		if (!(user instanceof User)) throw new Error(user);
+		const user = await AuthRepository.validateCredentials(credentials);
 
-		return await this.repo.addAuth(user);
+		return await AuthRepository.addAuth(user);
 	}
 
 	// logout
 	static async removeAuth(user: string | User) {
-		const authExists = this.repo.exists({
+		const authExists = AuthRepository.exists({
 			where: {
 				userId: typeof user == 'string' ? user : user.id,
 			},
 		});
-		if (!authExists) throw new Error(AuthErrorCodes.AUTH_NOT_FOUND);
 
-		await this.repo.removeAuth(user);
+		await AuthRepository.removeAuth(user);
 	}
 
 	// register
 	static async addUser(user: Partial<User>) {
-		await this.usersRepo.addUser(user);
-		const userExist = await this.usersRepo.exists({
+		const userExist = await UserRepository.exists({
 			where: {
-				id: user.id,
+				username: user.username,
 			},
 		});
-		if (!userExist) throw new Error(AuthErrorCodes.REGISTER_FAIL);
+		if (userExist) throw AuthErrors.USERNAME_EXISTS;
+		await UserRepository.addUser(user);
 	}
 
 	static async checkAuthSession(token: string) {
-		const session = await this.repo.checkAuthSession(token);
-		if (typeof session != 'string') throw new Error(session);
+		const session = await AuthRepository.checkAuthSession(token);
 	}
 
 	static async refreshSession(token: string): Promise<string> {
-		const result = await this.repo.refreshSession(token);
-
-		if (typeof result != 'string') throw new Error(result);
+		const result = await AuthRepository.refreshSession(token);
 
 		return result;
 	}

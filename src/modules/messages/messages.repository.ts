@@ -79,7 +79,15 @@ export const MessageRepository = AppDataSource.getRepository(Message).extend({
 	},
 	async addMessage(message: Partial<Message>) {
 		console.log(message);
-		await this.save(message);
+		const creationDate = Date.now();
+		const _message = this.create({
+			...message,
+			creationDate: creationDate,
+			lastModifiedDate: creationDate,
+		});
+
+		await this.save(_message);
+		return _message;
 	},
 	async updateMessage(messageId: string, message: Partial<Message>) {
 		await this.update(messageId, message);

@@ -6,10 +6,8 @@ export class AttachmentsController {
 	static async getAttachments(req: Request, resp: Response) {
 		const messageId = req.params.id;
 		try {
-			const attachments = await AttachmentsServices.getAttachments(
-				req.userId!,
-				messageId,
-			);
+			const attachments =
+				await AttachmentsServices.getAttachments(messageId);
 			return resp.status(200).json(attachments);
 		} catch (err: any) {
 			CommonUtils.sendError(resp, err);

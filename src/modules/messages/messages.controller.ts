@@ -44,12 +44,12 @@ export class MessageController {
 	}
 
 	static async addMessage(req: Request, resp: Response) {
-		await MessageServices.addMessage({
+		const message = await MessageServices.addMessage({
 			...req.body,
 			senderId: req.userId!,
 		});
-		await MessageServices.notifyMessageChanges(req.body.id!);
-		return resp.sendStatus(204);
+		await MessageServices.notifyMessageChanges(message);
+		return resp.json(message);
 	}
 
 	static async updateMessage(req: Request, resp: Response) {

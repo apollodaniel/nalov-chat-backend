@@ -44,6 +44,8 @@ export class StaticController {
 				req.headers,
 			);
 
+			console.log('Started receiving file');
+
 			req.on('data', onData);
 			req.on('end', onExit);
 			req.on('close', onExit);

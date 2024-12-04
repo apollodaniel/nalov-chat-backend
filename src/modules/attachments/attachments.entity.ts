@@ -24,14 +24,14 @@ export class Attachment {
 	@Column()
 	path: string;
 
-	@Column()
+	@Column({ nullable: true })
 	previewPath: string;
 
 	@Column()
 	byteLength: number;
 
-	@Column('timestamp')
-	date: Date;
+	@Column('bigint')
+	date: number;
 
 	@ManyToOne(() => Message, (message) => message.attachments, {
 		onDelete: 'CASCADE',

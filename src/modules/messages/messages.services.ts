@@ -1,6 +1,9 @@
+import { v4 } from 'uuid';
 import { AppDataSource } from '../../data-source';
 import { EVENT_EMITTER } from '../../utils/constants';
 import { getChatId } from '../../utils/functions';
+import { getAttachmentPath } from '../attachments/attachments.functions';
+import { AttachmentRepository } from '../attachments/attachments.repository';
 import { Message } from './messages.entity';
 import { MessageErrors } from './messages.errors';
 import { MessageRepository } from './messages.repository';
@@ -76,6 +79,23 @@ export class MessageServices {
 	}
 
 	static async addMessage(message: Partial<Message>) {
-		await MessageRepository.addMessage(message);
+		if (message.attachments) {
+			message.attachments = message.attachments.map((att) => {
+				const id = v4();
+				return AttachmentRepository.create({
+					...att,
+					id,
+					messageId: message.id,
+					path: getAttachmentPath(
+						getChatId(message.senderId!, message.receiverId!),
+						message.id!,
+						id,
+						att.filename,
+					) as string,
+					date: Date.now(),
+				});
+			});
+		}
+		return await MessageRepository.addMessage(message);
 	}
 }

@@ -48,6 +48,7 @@ export class Message {
 
 	@OneToMany(() => Attachment, (attachment) => attachment.message, {
 		eager: true,
+		cascade: true,
 	})
 	attachments: Attachment[];
 }

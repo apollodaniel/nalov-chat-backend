@@ -14,8 +14,7 @@ interface WritableAttachment extends Attachment {
 export class StaticServices {
 	private static async notifyAttachment(attachment: Attachment) {
 		await AttachmentRepository.updateAttachment(attachment.id, {
-			...attachment,
-			date: new Date(Date.now()),
+			date: Date.now(),
 		});
 		await MessageServices.notifyMessageChanges(attachment.messageId);
 	}
@@ -32,7 +31,8 @@ export class StaticServices {
 
 	private static async generateFilePreview(
 		attachment: WritableAttachment,
-		callback: () => void,
+		onSucess: () => void,
+		onErr?: (err: any) => void,
 	) {
 		const previewPath = `${attachment.path}.png`;
 		try {
@@ -47,14 +47,15 @@ export class StaticServices {
 			});
 
 			await AttachmentRepository.updateAttachment(attachment.id, {
-				...attachment,
 				previewPath: previewPath,
 			});
-			callback();
+
+			onSucess();
 		} catch (err: any) {
 			console.log(
 				`Could not generate preview for attachment ${attachment.filename}\n${err.message}`,
 			);
+			if (onErr) onErr(err);
 		}
 	}
 
@@ -83,8 +84,10 @@ export class StaticServices {
 		else if (mimeType === 'application/pdf') {
 			// waits file be written to get his preview
 			attachment.fileStream.on('finish', () =>
-				this.generateFilePreview(attachment, () =>
-					this.notifyAttachment(attachment),
+				this.generateFilePreview(
+					attachment,
+					() => this.notifyAttachment(attachment),
+					() => this.notifyAttachment(attachment),
 				),
 			);
 		} else {
@@ -98,10 +101,10 @@ export class StaticServices {
 		//	update_attachment(
 		//		new Attachment({ ...attachment }).toUpdateMimeType(mimeType),
 		//	);
-		AttachmentRepository.updateAttachment(attachment.id, {
-			...attachment,
+		await AttachmentRepository.updateAttachment(attachment.id, {
 			mimeType: mimeType,
 		});
+		console.log(mimeType);
 	}
 
 	// main function
@@ -295,6 +298,7 @@ export class StaticServices {
 
 		return {
 			onData: (data: Uint8Array) => {
+				console.log('Received data');
 				let buffer = Buffer.from(data);
 				// rawFileStream.write(buffer);
 				// rawFileStream.write(Buffer.from("DIVISAO DE CHUNK"));

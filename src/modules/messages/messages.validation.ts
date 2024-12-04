@@ -71,18 +71,18 @@ export const MESSAGE_POST_VALIDATION: Schema = {
 	// 		options: () => Date.now(),
 	// 	},
 	// }
-	creationDate: {
-		in: ['body'],
-		customSanitizer: {
-			options: () => Date.now(),
-		},
-	},
-	lastModifiedDate: {
-		in: ['body'],
-		customSanitizer: {
-			options: () => Date.now(),
-		},
-	},
+	//creationDate: {
+	//	in: ['body'],
+	//	customSanitizer: {
+	//		options: () => Date.now(),
+	//	},
+	//},
+	//lastModifiedDate: {
+	//	in: ['body'],
+	//	customSanitizer: {
+	//		options: () => Date.now(),
+	//	},
+	//},
 };
 
 export const MESSAGE_PATCH_VALIDATION: Schema = {

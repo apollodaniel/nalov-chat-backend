@@ -21,7 +21,10 @@ export const AttachmentRepository = AppDataSource.getRepository(
 		attachmentId: string,
 		attachment: Partial<Attachment>,
 	) {
-		this.createQueryBuilder().whereInIds(attachmentId).update(attachment);
+		this.createQueryBuilder()
+			.whereInIds(attachmentId)
+			.update(attachment)
+			.execute();
 	},
 	async updateAttachments(
 		attachments: {
@@ -30,9 +33,10 @@ export const AttachmentRepository = AppDataSource.getRepository(
 		}[],
 	) {
 		for (const { attachmentId, attachment } of attachments) {
-			this.createQueryBuilder()
+			await this.createQueryBuilder()
 				.whereInIds(attachmentId)
-				.update(attachment);
+				.update(attachment)
+				.execute();
 		}
 	},
 });

@@ -129,7 +129,6 @@ export const AuthRepository = AppDataSource.getRepository(Auth).extend({
 			(res) => res.username == credentials.username,
 		);
 
-		console.log(usernameMatch);
 		if (
 			usernameMatch?.username == credentials.username &&
 			usernameMatch?.password == credentials.password

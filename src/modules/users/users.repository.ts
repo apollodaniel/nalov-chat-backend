@@ -11,8 +11,8 @@ export const UserRepository = AppDataSource.getRepository(User).extend({
 		await this.update(userId, user);
 	},
 	async removeUser(user: User | string): Promise<void> {
-		const user_id = typeof user == 'string' ? user : user.id;
-		await this.createQueryBuilder().whereInIds(user_id).delete().execute();
+		const userId = typeof user == 'string' ? user : user.id;
+		await this.delete(userId);
 	},
 	async getUser(
 		user: User | User[] | string | string[],

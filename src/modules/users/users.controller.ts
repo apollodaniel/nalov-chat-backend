@@ -46,10 +46,10 @@ export class UsersController {
 	}
 
 	static async removeUser(req: Request, resp: Response) {
-		const userId = req.userId;
+		const userId = req.userId!;
 
 		try {
-			await UsersServices.removeUser(userId!);
+			await UsersServices.removeUser(userId);
 			return resp.sendStatus(200);
 		} catch (err: any) {
 			CommonUtils.sendError(resp, err);

@@ -37,7 +37,6 @@ export class UsersServices {
 		onEnd: () => number;
 	}> {
 		let fileDir = join('./public/profile-pictures/');
-		console.log(fileDir);
 		if (!fs.existsSync(fileDir)) fs.mkdirSync(fileDir, { recursive: true });
 
 		const profilePictureFileStream = fs.createWriteStream(
@@ -128,11 +127,9 @@ export class UsersServices {
 			const end = boundaryOcurrences[1] || buffer.byteLength;
 
 			const content = bufferContent.slice(headerEndIndex, end);
-			console.log('File start');
 			filestream.write(content);
 		} else if (!usernamePatched) {
 			// raw file content
-			console.log('File mid');
 			filestream.write(
 				buffer.slice(
 					0,

@@ -22,7 +22,6 @@ export class MessagesWsController {
 		}
 		let listener = async (args: any) => {
 			// must be receiver id on opt
-			console.log('received event');
 			try {
 				const messages = await MessageServices.getMessages([
 					userId,
@@ -34,7 +33,7 @@ export class MessagesWsController {
 			}
 		};
 
-		console.log('Connected');
+		console.log('Connected to ' + getChatId(userId, receiverId));
 		EVENT_EMITTER.on(`update-${getChatId(receiverId, userId)}`, listener);
 
 		ws.on('close', () => {

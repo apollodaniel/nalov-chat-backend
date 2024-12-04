@@ -15,7 +15,6 @@ export class MessageServices {
 				? await MessageServices.getMessage(message)
 				: message;
 
-		console.log(_message);
 		EVENT_EMITTER.emit(
 			`update-${getChatId(_message.senderId, _message.receiverId)}`,
 		);

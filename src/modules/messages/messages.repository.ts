@@ -78,7 +78,6 @@ export const MessageRepository = AppDataSource.getRepository(Message).extend({
 		});
 	},
 	async addMessage(message: Partial<Message>) {
-		console.log(message);
 		const creationDate = Date.now();
 		const _message = this.create({
 			...message,

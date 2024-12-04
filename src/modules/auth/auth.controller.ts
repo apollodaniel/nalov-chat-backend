@@ -9,7 +9,6 @@ export class AuthController {
 	static async addAuth(req: Request, resp: Response) {
 		try {
 			// define authorization tokens
-			console.log(req.body);
 			const auth = await AuthServices.addAuth({
 				username: req.body.username,
 				password: req.body.password,
@@ -58,7 +57,6 @@ export class AuthController {
 	// register
 	static async addUser(req: Request, resp: Response) {
 		try {
-			console.log(req.body);
 			// register user
 			await AuthServices.addUser(req.body);
 

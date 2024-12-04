@@ -104,7 +104,6 @@ export class StaticServices {
 		await AttachmentRepository.updateAttachment(attachment.id, {
 			mimeType: mimeType,
 		});
-		console.log(mimeType);
 	}
 
 	// main function
@@ -298,7 +297,6 @@ export class StaticServices {
 
 		return {
 			onData: (data: Uint8Array) => {
-				console.log('Received data');
 				let buffer = Buffer.from(data);
 				// rawFileStream.write(buffer);
 				// rawFileStream.write(Buffer.from("DIVISAO DE CHUNK"));

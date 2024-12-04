@@ -68,7 +68,6 @@ export const ChatRepository = AppDataSource.getRepository(Message).extend({
 				};
 			}),
 		);
-		console.log(result);
 
 		return result;
 	},

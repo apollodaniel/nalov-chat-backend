@@ -47,6 +47,18 @@ export class MessageServices {
 
 		await MessageRepository.removeMessage(messageId);
 	}
+
+	static async markMessageSeen(
+		messages:
+			| { senderId: string; receiverId: string }
+			| string[]
+			| string
+			| Message[]
+			| Message,
+	) {
+		await MessageRepository.markMessagesAsSeen(messages);
+	}
+
 	// must verify message owner
 	static async updateMessage(
 		messageId: string,

@@ -21,10 +21,7 @@ export class SocketController {
 		}
 
 		try {
-			console.log(token);
-			console.log(url);
 			const userId = await SocketsServices.getUserId(token);
-			console.log(userId);
 
 			if (url!.startsWith('/api/messages/listen')) {
 				MessagesWsController.handleRoute(ws, request, userId);

@@ -5,17 +5,21 @@ import { Message } from './messages.entity';
 
 export class MessageController {
 	static async getMessages(req: Request, resp: Response) {
-		console.log(req.query.receiverId);
 		const messages = await MessageServices.getMessages([
 			req.userId!,
 			req.query.receiverId!.toString(),
 		]);
+		await MessageServices.markMessageSeen({
+			senderId: req.userId!,
+			receiverId: req.query.receiverId!.toString(),
+		});
 		return resp.status(200).json(messages);
 	}
 
 	static async getMessage(req: Request, resp: Response) {
 		try {
 			const message = await MessageServices.getMessage(req.params.id!);
+			await MessageServices.markMessageSeen(message.id);
 			return resp.status(200).send(message);
 		} catch (err: any) {
 			CommonUtils.sendError(resp, err);

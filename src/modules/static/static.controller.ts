@@ -39,7 +39,7 @@ export class StaticController {
 		const message = await MessageServices.getMessage(messageId);
 
 		try {
-			const { onData, onExit, onError } = await StaticServices.fileUpload(
+			const { onData, onEnd, onError } = await StaticServices.fileUpload(
 				message,
 				req.headers,
 			);
@@ -47,8 +47,8 @@ export class StaticController {
 			console.log('Started receiving file');
 
 			req.on('data', onData);
-			req.on('end', onExit);
-			req.on('close', onExit);
+			req.on('end', onEnd);
+			req.on('close', onEnd);
 			req.on('error', (e) => {
 				CommonUtils.sendError(resp, onError(e));
 			});

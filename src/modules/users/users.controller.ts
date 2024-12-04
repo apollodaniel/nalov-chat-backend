@@ -3,6 +3,7 @@ import { UsersServices } from './users.services';
 import { User } from './users.entity';
 import { UserQuery, UserQueryDefaults } from './users.types';
 import { CommonUtils } from '../shared/common.utils';
+import fs from 'fs';
 
 export class UsersController {
 	static async getUsers(req: Request, resp: Response) {
@@ -57,13 +58,36 @@ export class UsersController {
 
 	static async updateUser(req: Request, resp: Response) {
 		const userId = req.userId;
-		const user: Partial<User> = req.body;
 
-		try {
-			await UsersServices.updateUser(userId!, user);
-			return resp.sendStatus(200);
-		} catch (err: any) {
-			CommonUtils.sendError(resp, err);
-		}
+		if (
+			!req.headers['content-type'] ||
+			!req.headers['content-type']?.startsWith('multipart/form-data')
+		)
+			return resp.sendStatus(400);
+
+		const boundary = req.headers['content-type']
+			.split(';')[1]
+			.replace('boundary=', '')
+			.trim();
+
+		const { onData, onError, onEnd } = await UsersServices.updateUser(
+			boundary,
+			userId!,
+		);
+		req.on('data', onData);
+
+		Promise.race([
+			new Promise<number>((r) => {
+				req.on('error', () => r(onError()));
+			}),
+			new Promise<number>((r) => {
+				req.on('end', () => r(onEnd()));
+			}),
+			new Promise<number>((r) => {
+				req.on('close', () => r(onEnd()));
+			}),
+		]).then((status) => {
+			return resp.sendStatus(status);
+		});
 	}
 }

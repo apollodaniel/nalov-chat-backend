@@ -18,7 +18,7 @@ export class StaticServices {
 		});
 		await MessageServices.notifyMessageChanges(attachment.messageId);
 	}
-	private static getChunkHeaderEndIndex(buffer: Buffer): number {
+	static getChunkHeaderEndIndex(buffer: Buffer): number {
 		const bufferStr = buffer.toString('binary');
 		const contentTypeMatch = bufferStr.match(/Content-Type:.+/);
 
@@ -266,7 +266,7 @@ export class StaticServices {
 	): Promise<{
 		onData: (data: Uint8Array) => void;
 		onError: (err: any) => any;
-		onExit: () => void;
+		onEnd: () => void;
 	}> {
 		let attachments: WritableAttachment[] = (
 			await AttachmentRepository.getAttachments(message.id)
@@ -319,7 +319,7 @@ export class StaticServices {
 				];
 				attachmentStack = attStack;
 			},
-			onExit: () => {
+			onEnd: () => {
 				attachments.forEach((a) => a.fileStream.end());
 			},
 			onError: () => {

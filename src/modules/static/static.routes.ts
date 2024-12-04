@@ -10,7 +10,7 @@ router.get('/files/chats/', StaticController.checkPermission);
 router.use('/files', express.static('files/'));
 router.use(
 	'/public/profile-pictures',
-	express.static('public/profile-picture'),
+	express.static('public/profile-pictures'),
 );
 router.use(
 	'/default/profile-pictures',

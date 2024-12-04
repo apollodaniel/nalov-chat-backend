@@ -1,5 +1,6 @@
 import { v4 } from 'uuid';
-import { AppDataSource } from '../../data-source';
+import fs from 'fs';
+import { join } from 'path';
 import { EVENT_EMITTER } from '../../utils/constants';
 import { getChatId } from '../../utils/functions';
 import { getAttachmentPath } from '../attachments/attachments.functions';
@@ -43,6 +44,16 @@ export class MessageServices {
 	static async removeMessage(messageId: string, userId: string) {
 		const message: Message | null =
 			await MessageRepository.getMessage(messageId);
+
+		if (message)
+			fs.promises.rm(
+				join(
+					'files/',
+					getChatId(message.senderId, message.receiverId),
+					message!.id,
+				),
+				{ recursive: true, force: true },
+			);
 
 		if (!message) throw MessageErrors.MESSAGE_NOT_FOUND;
 		else if (message.senderId != userId) throw MessageErrors.NO_PERMISSION;

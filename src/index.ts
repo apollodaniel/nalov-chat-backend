@@ -1,17 +1,16 @@
 import express from 'express';
 import cors from 'cors';
-import { loggin_middleware } from './utils/middlewares/middlewares';
 import dotenv from 'dotenv';
-import main_router from './routes/main';
-import { WebSocketServer } from 'ws';
-import ws_server from './sockets';
-import cookie_parser from 'cookie-parser';
+import mainRouter from './modules/main';
+import wsServer from './modules/sockets/sockets.server';
+import cookieParser from 'cookie-parser';
+import { loggingMiddleware } from './modules/shared/logging.middlewares';
+import { AppDataSource } from './data-source';
+import e from 'cors';
 
 dotenv.config();
 
-const PORT = process.env.PORT || 5500;
-
-// Create WebSocket server instances
+const PORT = process.env.PORT || 8751;
 
 const app = express();
 
@@ -23,17 +22,27 @@ app.use(
 		},
 	}),
 );
-app.use(cookie_parser());
+
+app.use(cookieParser(process.env.COOKIES_SECRET!) as any);
 app.use(express.json());
 
-app.use(loggin_middleware);
-app.use(main_router);
+app.use(loggingMiddleware);
+app.use(mainRouter);
 
-app.listen(PORT, () => {
-	console.log(`Listening on port ${PORT}`);
-});
+AppDataSource.initialize()
+	.then(async () => {
+		// exec pending migrations
+		await AppDataSource.runMigrations();
+		console.log('Initialized AppDataSource');
+		app.listen(PORT, () => {
+			console.log(`Listening on port ${PORT}`);
+		});
 
-// Start the HTTP server
-ws_server.listen(8081, () => {
-	console.log('Server is listening on port 8081');
-});
+		// Start the WebSocket server
+		wsServer.listen(8081, () => {
+			console.log('WS Server listening on port 8081');
+		});
+	})
+	.catch((err) => {
+		console.log(err.message);
+	});

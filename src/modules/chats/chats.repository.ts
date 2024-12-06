@@ -1,12 +1,12 @@
 import { Repository } from 'typeorm';
-import { IChat } from '../../types/message';
 import { Message } from '../messages/messages.entity';
 import { User } from '../users/users.entity';
 import { AppDataSource } from '../../data-source';
 import { MessageRepository } from '../messages/messages.repository';
+import { IChat } from './chats.types';
 
 export const ChatRepository = AppDataSource.getRepository(Message).extend({
-	async getChats(user: User | string): Promise<any[]> {
+	async getChats(user: User | string): Promise<IChat[]> {
 		const userId = typeof user == 'string' ? user : user.id;
 
 		/*

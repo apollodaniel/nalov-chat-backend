@@ -1,6 +1,6 @@
 import { body, Schema } from 'express-validator';
 import { v4 as gen_v4 } from 'uuid';
-import { USERNAME_VALIDATION_REGEX } from '../../utils/constants';
+import { USERNAME_VALIDATION_REGEX } from '../shared/common.constants';
 
 export const REGISTER_VALIDATION_SCHEMA: Schema = {
 	id: {

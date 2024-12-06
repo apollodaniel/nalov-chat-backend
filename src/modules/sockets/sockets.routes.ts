@@ -5,7 +5,7 @@ import http from 'http';
 import { WebSocket } from 'ws';
 import { SocketsServices } from './sockets.services';
 import { ErrorEntry } from '../shared/common.types';
-import { JwtHelper } from '../../utils/jwtHelper';
+import { JwtHelper } from '../shared/common.jwt';
 
 export class SocketController {
 	static async handleRoutes(ws: WebSocket, request: http.IncomingMessage) {

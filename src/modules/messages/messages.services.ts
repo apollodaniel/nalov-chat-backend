@@ -1,13 +1,13 @@
 import { v4 } from 'uuid';
 import fs from 'fs';
 import { join } from 'path';
-import { EVENT_EMITTER } from '../../utils/constants';
-import { getChatId } from '../../utils/functions';
 import { getAttachmentPath } from '../attachments/attachments.functions';
 import { AttachmentRepository } from '../attachments/attachments.repository';
 import { Message } from './messages.entity';
 import { MessageErrors } from './messages.errors';
 import { MessageRepository } from './messages.repository';
+import { EVENT_EMITTER } from '../shared/common.constants';
+import { CommonUtils } from '../shared/common.utils';
 
 export class MessageServices {
 	static async notifyMessageChanges(message: Message | string) {
@@ -17,7 +17,7 @@ export class MessageServices {
 				: message;
 
 		EVENT_EMITTER.emit(
-			`update-${getChatId(_message.senderId, _message.receiverId)}`,
+			`update-${CommonUtils.getChatId(_message.senderId, _message.receiverId)}`,
 		);
 	}
 
@@ -25,7 +25,7 @@ export class MessageServices {
 	static async getMessages(chatId: string | [string, string]) {
 		const messages = await MessageRepository.getMessages(
 			typeof chatId != 'string'
-				? getChatId(chatId[0], chatId[1])
+				? CommonUtils.getChatId(chatId[0], chatId[1])
 				: chatId,
 		);
 
@@ -49,7 +49,7 @@ export class MessageServices {
 			fs.promises.rm(
 				join(
 					'files/',
-					getChatId(message.senderId, message.receiverId),
+					CommonUtils.getChatId(message.senderId, message.receiverId),
 					message!.id,
 				),
 				{ recursive: true, force: true },
@@ -97,7 +97,10 @@ export class MessageServices {
 					id,
 					messageId: message.id,
 					path: getAttachmentPath(
-						getChatId(message.senderId!, message.receiverId!),
+						CommonUtils.getChatId(
+							message.senderId!,
+							message.receiverId!,
+						),
 						message.id!,
 						id,
 						att.filename,

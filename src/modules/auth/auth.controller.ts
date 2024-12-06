@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
 import { AuthServices } from './auth.services';
-import { cookieConfig } from '../../utils/constants';
 import { AuthErrors } from './auth.errors';
 import { CommonUtils } from '../shared/common.utils';
+import { cookieConfig } from '../shared/common.constants';
 
 export class AuthController {
 	// login

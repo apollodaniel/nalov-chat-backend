@@ -1,6 +1,6 @@
 import { IncomingMessage } from 'http';
 import { parse } from 'url';
-import { EVENT_EMITTER } from '../../utils/constants';
+import { EVENT_EMITTER } from '../shared/common.constants';
 import { ChatsServices } from './chats.services';
 import { Server, WebSocket, WebSocketServer } from 'ws';
 import { CommonUtils } from '../shared/common.utils';

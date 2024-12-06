@@ -1,11 +1,11 @@
 import { Repository } from 'typeorm';
 import { Auth } from './auth.entity';
 import { User } from '../users/users.entity';
-import { JwtHelper } from '../../utils/jwtHelper';
 import { AuthErrors } from './auth.errors';
 import { AppDataSource } from '../../data-source';
 import { UserRepository } from '../users/users.repository';
 import { AuthCredentials } from './auth.types';
+import { JwtHelper } from '../shared/common.jwt';
 
 const usersRepo = AppDataSource.getRepository(User);
 export const AuthRepository = AppDataSource.getRepository(Auth).extend({

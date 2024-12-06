@@ -1,11 +1,9 @@
 import { IncomingMessage } from 'http';
 import { parse } from 'url';
-import { EVENT_EMITTER } from '../../utils/constants';
 import { WebSocket } from 'ws';
 import { MessageServices } from './messages.services';
-import { getChatId } from '../../utils/functions';
+import { EVENT_EMITTER } from '../shared/common.constants';
 import { CommonUtils } from '../shared/common.utils';
-import { Response } from 'express';
 
 export class MessagesWsController {
 	static async handleRoute(
@@ -33,12 +31,17 @@ export class MessagesWsController {
 			}
 		};
 
-		console.log('Connected to ' + getChatId(userId, receiverId));
-		EVENT_EMITTER.on(`update-${getChatId(receiverId, userId)}`, listener);
+		console.log(
+			'Connected to ' + CommonUtils.getChatId(userId, receiverId),
+		);
+		EVENT_EMITTER.on(
+			`update-${CommonUtils.getChatId(receiverId, userId)}`,
+			listener,
+		);
 
 		ws.on('close', () => {
 			EVENT_EMITTER.off(
-				`update-${getChatId(receiverId, userId)}`,
+				`update-${CommonUtils.getChatId(receiverId, userId)}`,
 				listener,
 			);
 			console.log(`Closed message connection for ${userId}`);

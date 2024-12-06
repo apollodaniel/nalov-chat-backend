@@ -1,11 +1,11 @@
-import { parseChatId } from '../../utils/functions';
 import { Message } from './messages.entity';
 import { AppDataSource } from '../../data-source';
 import { IsNull } from 'typeorm';
+import { CommonUtils } from '../shared/common.utils';
 
 export const MessageRepository = AppDataSource.getRepository(Message).extend({
 	async getMessages(chatId: string): Promise<Message[]> {
-		const [user1, user2] = parseChatId(chatId);
+		const [user1, user2] = CommonUtils.parseChatId(chatId);
 
 		return this.find({
 			where: [

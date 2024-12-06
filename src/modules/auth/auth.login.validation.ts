@@ -1,5 +1,5 @@
 import { Schema } from 'express-validator';
-import { USERNAME_VALIDATION_REGEX } from '../../utils/constants';
+import { USERNAME_VALIDATION_REGEX } from '../shared/common.constants';
 
 export const LOGIN_VALIDATION_SCHEMA: Schema = {
 	username: {

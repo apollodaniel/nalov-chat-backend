@@ -27,6 +27,8 @@ export class UsersController {
 			}
 		});
 
+		console.log(query.fieldQueries);
+
 		const users = await UsersServices.getUsers(query);
 
 		return resp.status(200).send(users);

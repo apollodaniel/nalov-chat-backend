@@ -10,9 +10,10 @@ export class StaticController {
 		resp: Response,
 		next: NextFunction,
 	) {
-		const splitted_path = req.path
-			.replace('/files/chats/', '')
-			.split('/')[0];
+		const splitted_path = req.path.split('/')[1];
+
+		console.log(splitted_path);
+		console.log(req.userId);
 
 		if (req.userId && splitted_path.includes(req.userId)) {
 			return next();

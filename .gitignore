@@ -5,3 +5,4 @@ public/
 .env
 src/**/*.js
 **.norg
+**.org

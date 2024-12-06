@@ -7,7 +7,9 @@ import {
 } from 'typeorm';
 import { Message } from '../messages/messages.entity';
 
-@Entity()
+@Entity({
+	name: 'attachments',
+})
 export class Attachment {
 	@PrimaryGeneratedColumn('uuid')
 	id: string;

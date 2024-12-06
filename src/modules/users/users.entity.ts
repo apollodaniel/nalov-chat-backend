@@ -1,15 +1,9 @@
 import { Entity, Column, PrimaryColumn, OneToMany } from 'typeorm';
 import { Message } from '../messages/messages.entity';
 
-export interface IUser {
-	id?: string;
-	username: string;
-	name: string;
-	password: string;
-	profilePicture?: string;
-}
-
-@Entity()
+@Entity({
+	name: 'users',
+})
 export class User {
 	@PrimaryColumn('uuid')
 	id: string;

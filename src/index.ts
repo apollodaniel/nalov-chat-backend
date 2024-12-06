@@ -1,12 +1,12 @@
-import express from "express";
-import cors from "cors";
-import dotenv from "dotenv";
-import mainRouter from "./modules/main";
-import wsServer from "./modules/sockets/sockets.server";
-import cookieParser from "cookie-parser";
-import { loggingMiddleware } from "./modules/shared/logging.middlewares";
-import { AppDataSource } from "./data-source";
-import e from "cors";
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import mainRouter from './modules/main';
+import wsServer from './modules/sockets/sockets.server';
+import cookieParser from 'cookie-parser';
+import { loggingMiddleware } from './modules/shared/logging.middlewares';
+import { AppDataSource } from './data-source';
+import e from 'cors';
 
 dotenv.config();
 
@@ -30,16 +30,17 @@ app.use(loggingMiddleware);
 app.use(mainRouter);
 
 AppDataSource.initialize()
-	.then(() => {
-		console.log("Initialized AppDataSource");
+	.then(async () => {
+		// exec pending migrations
+		await AppDataSource.runMigrations();
+		console.log('Initialized AppDataSource');
 		app.listen(PORT, () => {
 			console.log(`Listening on port ${PORT}`);
-
 		});
 
 		// Start the WebSocket server
 		wsServer.listen(8081, () => {
-			console.log("WS Server listening on port 8081");
+			console.log('WS Server listening on port 8081');
 		});
 	})
 	.catch((err) => {

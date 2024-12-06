@@ -13,6 +13,7 @@ import { Attachment } from '../attachments/attachments.entity';
 	orderBy: {
 		creationDate: 'ASC',
 	},
+	name: 'messages',
 })
 export class Message {
 	@PrimaryGeneratedColumn('uuid')

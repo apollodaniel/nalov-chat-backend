@@ -1,7 +1,9 @@
 import { Column, Entity, JoinColumn, ManyToOne, PrimaryColumn } from 'typeorm';
 import { User } from '../users/users.entity';
 
-@Entity()
+@Entity({
+	name: 'auth',
+})
 export class Auth {
 	@PrimaryColumn()
 	token: string;

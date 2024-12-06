@@ -23,35 +23,35 @@ export const ChatRepository = AppDataSource.getRepository(Message).extend({
 
 		const rawQuery = `
   SELECT DISTINCT ON (
-    LEAST("message"."senderId", "message"."receiverId"),
-    GREATEST("message"."senderId", "message"."receiverId")
+    LEAST("messages"."senderId", "messages"."receiverId"),
+    GREATEST("messages"."senderId", "messages"."receiverId")
   )
 	to_jsonb(
 		CASE
-			WHEN "message"."senderId" = $1 THEN "receiver"
+			WHEN "messages"."senderId" = $1 THEN "receiver"
 			ELSE "sender"
 		END
 	) - 'password' AS "user",
-	"message".id AS "lastMessage",
+	"messages".id AS "lastMessage",
     (
       SELECT COUNT(*)::int
-      FROM "message" "subMessage"
+      FROM "messages" "subMessage"
       WHERE "subMessage"."seenDate" IS NULL
         AND "subMessage"."senderId" =
           CASE
-            WHEN "message"."senderId" = $1 THEN "message"."receiverId"
-            ELSE "message"."senderId"
+            WHEN "messages"."senderId" = $1 THEN "messages"."receiverId"
+            ELSE "messages"."senderId"
           END
         AND "subMessage"."receiverId" = $1
     ) AS "unseenMessageCount"
-  FROM "message"
-  INNER JOIN "user" "sender" ON "sender"."id" = "message"."senderId"
-  INNER JOIN "user" "receiver" ON "receiver"."id" = "message"."receiverId"
-  WHERE $1 IN ("message"."receiverId", "message"."senderId")
+  FROM "messages"
+  INNER JOIN "users" "sender" ON "sender"."id" = "messages"."senderId"
+  INNER JOIN "users" "receiver" ON "receiver"."id" = "messages"."receiverId"
+  WHERE $1 IN ("messages"."receiverId", "messages"."senderId")
   ORDER BY
-    LEAST("message"."senderId", "message"."receiverId") ASC,
-    GREATEST("message"."senderId", "message"."receiverId") ASC,
-    "message"."creationDate" DESC;
+    LEAST("messages"."senderId", "messages"."receiverId") ASC,
+    GREATEST("messages"."senderId", "messages"."receiverId") ASC,
+    "messages"."creationDate" DESC;
     `;
 
 		const result: any[] = await Promise.all(

@@ -15,7 +15,7 @@ export const AppDataSource = new DataSource({
 	username: process.env.POSTGRES_USER,
 	password: process.env.POSTGRES_PASSWORD,
 	database: process.env.POSTGRES_DB,
-	synchronize: true,
+	synchronize: false,
 	logging: false,
 	entities: [
 		Auth,
@@ -23,7 +23,7 @@ export const AppDataSource = new DataSource({
 		Attachment,
 		User, // Handles both TS (dev) and JS (prod)
 	],
-	migrations: ['./migrations/*.ts'], // Update path if needed
+	migrations: ['src/migrations/*.ts'], // Update path if needed
 	subscribers: [],
 	migrationsTableName: 'migrations',
 });

@@ -1,5 +1,13 @@
 import { QueryOptions } from '../shared/common.types';
 
+export interface IUser {
+	id?: string;
+	username: string;
+	name: string;
+	password: string;
+	profilePicture?: string;
+}
+
 export interface UserQuery extends QueryOptions {
 	fieldQueries: {
 		field: string;

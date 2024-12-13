@@ -35,16 +35,19 @@ export const AuthErrors: Record<string, ErrorEntry> = {
 	UNKNOWN_USERNAME: {
 		code: 'UNKNOWN_USERNAME',
 		message: 'Unknown username',
+		field: 'username',
 		statusCode: 404,
 	},
 	INCORRECT_PASSWORD: {
 		code: 'INCORRECT_PASSWORD',
 		message: 'Incorrect password',
+		field: 'password',
 		statusCode: 401,
 	},
-	USERNAME_EXISTS: {
-		code: 'USERNAME_EXISTS',
+	USERNAME_ALREADY_EXISTS: {
+		code: 'USERNAME_ALREADY_EXISTS',
 		message: 'Username already exists',
+		field: 'username',
 		statusCode: 400,
 	},
 };

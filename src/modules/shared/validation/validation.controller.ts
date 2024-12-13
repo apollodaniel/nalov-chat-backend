@@ -8,7 +8,9 @@ export class ValidationController {
 	static validate(req: Request, resp: Response, next: NextFunction) {
 		const result = validationResult(req);
 		if (!result.isEmpty())
-			return resp.status(400).send({ errors: result.array() });
+			return resp.status(400).send({
+				errors: ValidationServices.parseErrors(result.array()),
+			});
 
 		next();
 	}
@@ -20,7 +22,9 @@ export class ValidationController {
 	) {
 		const result = validationResult(req);
 		if (!result.isEmpty())
-			return resp.status(400).send({ errors: result.array() });
+			return resp.status(400).send({
+				errors: ValidationServices.parseErrors(result.array()),
+			});
 
 		const authToken = req.cookies.authToken;
 		if (!authToken) return resp.sendStatus(601);

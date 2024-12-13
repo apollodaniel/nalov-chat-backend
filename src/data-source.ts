@@ -23,7 +23,7 @@ export const AppDataSource = new DataSource({
 		Attachment,
 		User, // Handles both TS (dev) and JS (prod)
 	],
-	migrations: ['src/migrations/*.ts'], // Update path if needed
+	migrations: ['src/migrations/*.ts', 'migrations/*.js'], // Update path if needed
 	subscribers: [],
 	migrationsTableName: 'migrations',
 });

@@ -1,5 +1,6 @@
 import { Schema } from 'express-validator';
 import { User } from './users.entity';
+import { FULLNAME_VALIDATION_REGEX } from '../shared/common.constants';
 
 export const USER_GET_SINGLE_VALIDATION_SCHEMA: Schema = {
 	id: {
@@ -54,15 +55,32 @@ export const USER_PATCH_SINGLE_VALIDATION_SCHEMA: Schema = {
 		in: ['query', 'body'],
 		optional: true,
 		notEmpty: {
-			errorMessage: 'name must not be empty',
+			errorMessage: {
+				code: 'EMPTY_NAME',
+				message: 'Name must not be empty.',
+			},
 		},
 		isString: {
-			errorMessage: 'name must be a valid string',
+			errorMessage: {
+				code: 'INVALID_NAME_TYPE',
+				message: 'Name must be a valid string.',
+			},
+		},
+		matches: {
+			options: RegExp(FULLNAME_VALIDATION_REGEX),
+			errorMessage: {
+				code: 'INVALID_FULLNAME',
+				message: 'Invalid name format.',
+			},
 		},
 		isLength: {
 			options: {
 				min: 4,
 				max: 100,
+			},
+			errorMessage: {
+				code: 'INVALID_NAME_LENGTH',
+				message: 'Name must be between 4 and 100 characters long.',
 			},
 		},
 	},

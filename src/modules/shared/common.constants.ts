@@ -7,6 +7,7 @@ export const CREATE_ATTACHMENTS_TABLE = `CREATE TABLE IF NOT EXISTS attachments 
 id) ON DELETE CASCADE, path text NOT NULL, preview_path TEXT,  filename text NOT NULL, mime_type text NOT NULL, byte_length BIGINT NOT NULL, date bigint)`;
 
 export const USERNAME_VALIDATION_REGEX = `^(?=[a-zA-Z0-9._]{4,20}$)(?!.*[_.]{2})[^_.].*[^_.]$`;
+export const FULLNAME_VALIDATION_REGEX = `^[A-Z][a-z]+ [A-Z][a-z]+$`;
 
 export const EVENT_EMITTER = new EventEmitter2({
 	wildcard: true,

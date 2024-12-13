@@ -31,7 +31,7 @@ export class AuthServices {
 				username: user.username,
 			},
 		});
-		if (userExist) throw AuthErrors.USERNAME_EXISTS;
+		if (userExist) throw AuthErrors.USERNAME_ALREADY_EXISTS;
 		await UserRepository.addUser(user);
 	}
 

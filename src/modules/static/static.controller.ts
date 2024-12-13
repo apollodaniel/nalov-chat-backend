@@ -30,7 +30,7 @@ export class StaticController {
 		)
 			return resp.sendStatus(400);
 
-		const messageId: string | undefined = req.query.message_id?.toString();
+		const messageId: string | undefined = req.query.messageId?.toString();
 
 		// check messageId
 		if (!messageId) return resp.sendStatus(401);

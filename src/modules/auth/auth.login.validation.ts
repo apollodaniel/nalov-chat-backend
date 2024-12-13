@@ -5,20 +5,32 @@ export const LOGIN_VALIDATION_SCHEMA: Schema = {
 	username: {
 		in: ['body'],
 		notEmpty: {
-			errorMessage: 'username must not be empty',
+			errorMessage: {
+				code: 'EMPTY_USERNAME',
+				message: 'Username must not be empty.',
+			},
 		},
 		matches: {
 			options: USERNAME_VALIDATION_REGEX,
-			errorMessage: 'invalid username',
+			errorMessage: {
+				code: 'INVALID_USERNAME',
+				message: 'Invalid username format.',
+			},
 		},
 	},
 	password: {
 		in: ['body'],
 		notEmpty: {
-			errorMessage: 'password must not be empty',
+			errorMessage: {
+				code: 'EMPTY_PASSWORD',
+				message: 'Password must not be empty.',
+			},
 		},
 		isStrongPassword: {
-			errorMessage: 'invalid password',
+			errorMessage: {
+				code: 'INVALID_PASSWORD',
+				message: 'Password must meet the security requirements.',
+			},
 		},
 	},
 };

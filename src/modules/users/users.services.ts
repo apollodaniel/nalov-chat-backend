@@ -6,6 +6,8 @@ import { UserRepository } from './users.repository';
 import { UserQuery } from './users.types';
 import fs from 'fs';
 import { join } from 'path';
+import { FULLNAME_VALIDATION_REGEX } from '../shared/common.constants';
+import { ErrorEntry } from '../shared/common.types';
 
 export class UsersServices {
 	static async getUsers(query?: UserQuery): Promise<User[]> {
@@ -48,20 +50,25 @@ export class UsersServices {
 
 		return {
 			onData: async (data: Uint8Array) => {
-				await UsersServices.parseChunk(
-					boundary,
-					profilePictureFileStream,
-					Buffer.from(data),
-					userId,
-				);
+				if (!profilePictureFileStream.closed) {
+					await UsersServices.parseChunk(
+						boundary,
+						profilePictureFileStream,
+						Buffer.from(data),
+						userId,
+					);
+				}
 			},
 			onError: () => {
-				profilePictureFileStream.end();
+				profilePictureFileStream.once('drain', () =>
+					profilePictureFileStream.end(),
+				);
 				return 500;
 			},
 			onEnd: () => {
-				profilePictureFileStream.end();
-
+				profilePictureFileStream.once('drain', () =>
+					profilePictureFileStream.end(),
+				);
 				return 200;
 			},
 		};
@@ -73,54 +80,19 @@ export class UsersServices {
 		buffer: Buffer,
 		userId: string,
 	) {
-		const bufferStr = buffer.toString('binary');
 		let bufferContent = Buffer.copyBytesFrom(buffer);
+		let bufferStr = bufferContent.toString('binary');
 
 		const boundaryMatches = Array.from(
 			bufferStr.matchAll(new RegExp(`-*${boundary}-*`, 'g')),
 		);
-		let matchedBoundaries = boundaryMatches.map((match) => match[0]);
 		let boundaryOcurrences = boundaryMatches.map((match) => match.index);
-
-		// check if this is name field
-		const userNameMatch = bufferStr.match(/name="userName"/) || [];
-
-		let usernamePatched = false;
-		if (userNameMatch.length !== 0) {
-			usernamePatched = true;
-			bufferContent = buffer.slice(
-				boundaryOcurrences[1],
-				buffer.byteLength,
-			);
-
-			const name = buffer
-				.slice(
-					bufferStr.indexOf(userNameMatch[0]!) +
-						userNameMatch[0]!.length,
-					boundaryOcurrences[1]
-						? boundaryOcurrences[1]
-						: buffer.byteLength,
-				)
-				.toString('binary')
-				.replace('\n', '')
-				.replace('\r', '')
-				.trim();
-			UsersServices.updateName(userId, name);
-
-			matchedBoundaries = matchedBoundaries.filter(
-				(i, _index) => _index > 0,
-			);
-			boundaryOcurrences = boundaryOcurrences.filter(
-				(i, _index) => _index > 0,
-			);
-		}
 
 		const headerEndIndex =
 			StaticServices.getChunkHeaderEndIndex(bufferContent);
-		const filenameMatch = bufferStr.match(/Content-Type: /) || [];
 
 		// write files
-		if (filenameMatch.length > 0) {
+		if ((bufferStr.match(/name="profilePicture"/) || []).length > 0) {
 			fs.writeFileSync(`public/profile-pictures/${userId}.png`, '');
 			UsersServices.updateUserProfilePicture(userId);
 
@@ -128,7 +100,7 @@ export class UsersServices {
 
 			const content = bufferContent.slice(headerEndIndex, end);
 			filestream.write(content);
-		} else if (!usernamePatched) {
+		} else {
 			// raw file content
 			filestream.write(
 				buffer.slice(

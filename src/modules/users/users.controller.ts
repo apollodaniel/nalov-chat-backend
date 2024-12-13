@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { UsersServices } from './users.services';
 import { User } from './users.entity';
 import { UserQuery, UserQueryDefaults } from './users.types';
@@ -58,8 +58,17 @@ export class UsersController {
 		}
 	}
 
-	static async updateUser(req: Request, resp: Response) {
-		const userId = req.userId;
+	static async updateUser(req: Request, resp: Response, next: NextFunction) {
+		const userId = req.userId!;
+
+		// update user name
+		const newName = req.query.name;
+		if (newName) {
+			const user = (await UsersServices.getUser(userId)) as User;
+			if (user.name != newName) {
+				await UsersServices.updateName(userId, newName!.toString());
+			}
+		}
 
 		if (
 			!req.headers['content-type'] ||
@@ -76,6 +85,7 @@ export class UsersController {
 			boundary,
 			userId!,
 		);
+
 		req.on('data', onData);
 
 		Promise.race([
@@ -89,7 +99,9 @@ export class UsersController {
 				req.on('close', () => r(onEnd()));
 			}),
 		]).then((status) => {
-			return resp.sendStatus(status);
+			if (!resp.headersSent) {
+				return resp.sendStatus(status);
+			}
 		});
 	}
 }
